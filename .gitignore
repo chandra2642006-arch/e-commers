@@ -40,3 +40,8 @@ node_modules/
 # Database dumps
 *.sql.bak
 *.dump
+
+# Tunnels & Vercel
+tunnel_url.txt
+*.txt.bak
+.vercel/

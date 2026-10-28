@@ -3,9 +3,26 @@
    All API calls go to Flask at http://127.0.0.1:5000
    ============================================================ */
 
-const API = (typeof window !== "undefined" && window.location.protocol.startsWith("http"))
-  ? window.location.origin
-  : "http://127.0.0.1:5000";
+// Configurable backend API URL:
+// 1. window.TECHMART_API_BASE_URL (if injected by window/build)
+// 2. localStorage.getItem("techmart_api_url") (user can switch endpoint if needed)
+// 3. window.location.origin (for same-domain/proxy deployment or local Flask)
+// 4. Default to http://127.0.0.1:5000 for local dev
+function getApiBaseUrl() {
+  if (typeof window === "undefined") return "http://127.0.0.1:5000";
+  if (window.TECHMART_API_BASE_URL) return window.TECHMART_API_BASE_URL;
+  const stored = localStorage.getItem("techmart_api_url");
+  if (stored) return stored;
+  if (window.location.protocol.startsWith("http")) {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return window.location.port === "5000" ? window.location.origin : "http://127.0.0.1:5000";
+    }
+    return window.location.origin;
+  }
+  return "http://127.0.0.1:5000";
+}
+
+const API = getApiBaseUrl();
 
 // ---- Product emojis for visual flair ----
 const PRODUCT_EMOJIS = {
@@ -264,8 +281,19 @@ document.getElementById("checkoutForm").addEventListener("submit", async e => {
 // n8n webhook trigger (fire-and-forget from browser)
 // ============================================================
 async function triggerN8nWebhook(order) {
+  const isLocal = typeof window !== "undefined" && 
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+  const n8nWebhookUrl = (typeof window !== "undefined" && window.TECHMART_N8N_URL) ||
+    localStorage.getItem("techmart_n8n_url") ||
+    (isLocal ? "http://localhost:5678/webhook/order-event" : "");
+
+  if (!n8nWebhookUrl) {
+    // In production, n8n webhook can be configured via TECHMART_N8N_URL or triggered server-side
+    return;
+  }
+
   try {
-    await fetch("http://localhost:5678/webhook/order-event", {
+    await fetch(n8nWebhookUrl, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({
@@ -280,7 +308,7 @@ async function triggerN8nWebhook(order) {
       }),
     });
   } catch (_) {
-    // n8n not running — silently ignore
+    // n8n not running or blocked — silently ignore
   }
 }
 
