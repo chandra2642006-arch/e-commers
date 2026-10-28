@@ -7,6 +7,9 @@ import re
 import sys
 import time
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 def run_tunnel():
     cmd = [
         "ssh",
@@ -18,28 +21,37 @@ def run_tunnel():
     ]
     while True:
         try:
-            print("[Tunnel] Starting localhost.run SSH tunnel...")
+            print("[Tunnel] Starting localhost.run SSH tunnel...", flush=True)
             proc = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 bufsize=1
             )
             for line in proc.stdout:
-                print(line, end="")
+                try:
+                    sys.stdout.write(line)
+                    sys.stdout.flush()
+                except Exception:
+                    pass
                 match = re.search(r"https://[a-zA-Z0-9-]+\.lhr\.life", line)
                 if match:
                     url = match.group(0)
-                    with open("tunnel_url.txt", "w") as f:
-                        f.write(url)
-                    print(f"\n==========================================")
-                    print(f"🌟 ACTIVE PUBLIC LIVE LINK: {url}")
-                    print(f"==========================================\n")
+                    try:
+                        with open("tunnel_url.txt", "w", encoding="utf-8") as f:
+                            f.write(url)
+                    except Exception:
+                        pass
+                    print(f"\n==========================================", flush=True)
+                    print(f"[Tunnel] Active Public URL: {url}", flush=True)
+                    print(f"==========================================\n", flush=True)
             proc.wait()
         except Exception as e:
-            print(f"[Tunnel] Error: {e}")
-        time.sleep(2)
+            print(f"[Tunnel] Error: {e}", flush=True)
+        time.sleep(3)
 
 if __name__ == "__main__":
     run_tunnel()

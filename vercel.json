@@ -1,12 +1,6 @@
 {
   "cleanUrls": true,
   "outputDirectory": "frontend",
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://38c67c2e405b83.lhr.life/api/:path*"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
