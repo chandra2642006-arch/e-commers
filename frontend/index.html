@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TechMart — Order Exception Control Tower</title>
+  <meta name="description" content="TechMart: Browse products, place orders, and track them through our operations control tower." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===================== HEADER / NAV ===================== -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">TechMart</span>
+    </div>
+    <nav class="main-nav" id="mainNav">
+      <a href="#" class="nav-link active" data-page="home"     id="nav-home">Home</a>
+      <a href="#" class="nav-link"        data-page="products" id="nav-products">Products</a>
+      <a href="#" class="nav-link"        data-page="orders"   id="nav-orders">My Orders</a>
+      <a href="#" class="nav-link"        data-page="support"  id="nav-support">Support</a>
+      <a href="#" class="nav-link nav-tower" data-page="tower" id="nav-tower">🗼 Control Tower</a>
+    </nav>
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+  </div>
+</header>
+
+<!-- ===================== PAGES ===================== -->
+<main class="page-container">
+
+  <!-- ===== HOME ===== -->
+  <section class="page active" id="page-home">
+    <div class="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">Your Premium Tech Store</h1>
+        <p class="hero-subtitle">Quality gadgets. Smart orders. Real-time exception management.</p>
+        <button class="btn btn-primary hero-cta" onclick="navigate('products')">Shop Now</button>
+      </div>
+      <div class="hero-stats" id="heroStats">
+        <div class="stat-card"><div class="stat-num" id="stat-products">—</div><div class="stat-label">Products</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-orders">—</div><div class="stat-label">Orders</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-exceptions">—</div><div class="stat-label">Exceptions</div></div>
+      </div>
+    </div>
+
+    <div class="section-wrapper">
+      <h2 class="section-title">Featured Products</h2>
+      <div class="product-grid" id="homeProducts">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+      <div class="center-action">
+        <button class="btn btn-outline" onclick="navigate('products')">View All Products →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRODUCTS ===== -->
+  <section class="page" id="page-products">
+    <div class="section-wrapper">
+      <h1 class="section-title">Our Products</h1>
+      <p class="section-sub">All prices include GST. Stock updated in real time.</p>
+      <div class="product-grid" id="productsGrid">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CHECKOUT MODAL / INLINE ===== -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+      <button class="modal-close" id="closeCheckout" aria-label="Close">&times;</button>
+      <h2 id="checkoutTitle">Checkout</h2>
+      <form id="checkoutForm" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="custName">Full Name *</label>
+            <input type="text" id="custName" placeholder="Ravi Kumar" required />
+          </div>
+          <div class="form-group">
+            <label for="custEmail">Email *</label>
+            <input type="email" id="custEmail" placeholder="ravi@example.com" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="custPhone">Phone *</label>
+            <input type="tel" id="custPhone" placeholder="9876543210" required />
+          </div>
+          <div class="form-group">
+            <label for="custPincode">Pincode *</label>
+            <input type="text" id="custPincode" placeholder="560001" required />
+          </div>
+        </div>
+        <div class="form-group full-width">
+          <label for="custAddress">Delivery Address *</label>
+          <input type="text" id="custAddress" placeholder="Street, Area" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="custCity">City *</label>
+            <input type="text" id="custCity" placeholder="Bengaluru" required />
+          </div>
+          <div class="form-group">
+            <label for="payMethod">Payment Method *</label>
+            <select id="payMethod">
+              <option value="ONLINE">💳 Online (Demo)</option>
+              <option value="COD">🚚 Cash on Delivery</option>
+            </select>
+          </div>
+        </div>
+        <!-- Cart summary -->
+        <div class="cart-summary" id="cartSummary"></div>
+        <div class="order-total-row">
+          <span>Order Total:</span>
+          <span class="order-total-amount" id="checkoutTotal">₹0</span>
+        </div>
+        <div class="checkout-notice">
+          ⚠️ <strong>Demo mode:</strong> No real payment is processed. Online payment is always simulated as successful.
+        </div>
+        <div id="checkoutMsg" role="alert"></div>
+        <button type="submit" class="btn btn-primary full-width" id="placeOrderBtn">Place Order</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cart button floating -->
+  <button class="cart-fab" id="cartFab" title="View Cart" style="display:none">
+    🛒 <span class="cart-count" id="cartCount">0</span>
+  </button>
+
+  <!-- ===== ORDERS ===== -->
+  <section class="page" id="page-orders">
+    <div class="section-wrapper">
+      <h1 class="section-title">Order History</h1>
+      <div class="toolbar">
+        <button class="btn btn-sm btn-outline" id="refreshOrders" onclick="loadOrders()">↻ Refresh</button>
+      </div>
+      <div id="ordersContainer">
+        <div class="loading-msg">Loading orders…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SUPPORT ===== -->
+  <section class="page" id="page-support">
+    <div class="section-wrapper">
+      <h1 class="section-title">Support</h1>
+      <div class="support-grid">
+        <div class="support-card">
+          <div class="support-icon">📦</div>
+          <h3>Track Your Order</h3>
+          <p>Check your order status in <a href="#" onclick="navigate('orders')">My Orders</a>.</p>
+        </div>
+        <div class="support-card">
+          <div class="support-icon">💰</div>
+          <h3>Payments</h3>
+          <p>We accept Online (demo) and Cash on Delivery. No real charges are made.</p>
+        </div>
+        <div class="support-card">
+          <div class="support-icon">🔄</div>
+          <h3>Returns & Refunds</h3>
+          <p>Contact our team within 7 days of delivery. Refunds processed in 5–7 business days.</p>
+        </div>
+        <div class="support-card">
+          <div class="support-icon">📞</div>
+          <h3>Contact Us</h3>
+          <p>Email: <a href="mailto:support@techmart.demo">support@techmart.demo</a><br/>
+             Hours: Mon–Sat, 9 AM – 6 PM IST</p>
+        </div>
+        <div class="support-card">
+          <div class="support-icon">🛒</div>
+          <h3>Order Exceptions</h3>
+          <p>If your order has an issue, our operations team is automatically notified.
+             View details in the <a href="#" onclick="navigate('tower')">Control Tower</a>.</p>
+        </div>
+        <div class="support-card">
+          <div class="support-icon">❓</div>
+          <h3>FAQs</h3>
+          <p>This is an internship demo project demonstrating e-commerce order management
+             with exception detection and automation using n8n.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTROL TOWER ===== -->
+  <section class="page" id="page-tower">
+    <div class="section-wrapper">
+      <h1 class="section-title">🗼 Operations Control Tower</h1>
+      <p class="section-sub">Live dashboard — order health, exceptions, and automation events.</p>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon">📋</div>
+          <div class="kpi-val" id="kpi-total">—</div>
+          <div class="kpi-label">Total Orders</div>
+        </div>
+        <div class="kpi-card kpi-red">
+          <div class="kpi-icon">⚠️</div>
+          <div class="kpi-val" id="kpi-exc">—</div>
+          <div class="kpi-label">Open Exceptions</div>
+        </div>
+        <div class="kpi-card kpi-orange">
+          <div class="kpi-icon">🔴</div>
+          <div class="kpi-val" id="kpi-high">—</div>
+          <div class="kpi-label">High / Critical</div>
+        </div>
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-val" id="kpi-revenue">—</div>
+          <div class="kpi-label">Revenue (Paid)</div>
+        </div>
+      </div>
+
+      <div class="tower-two-col">
+        <!-- Exceptions table -->
+        <div class="tower-panel">
+          <h2 class="panel-title">Open Exceptions</h2>
+          <div id="exceptionsTable"></div>
+        </div>
+        <!-- Recent events -->
+        <div class="tower-panel">
+          <h2 class="panel-title">Recent Automation Events</h2>
+          <div id="eventsTable"></div>
+        </div>
+      </div>
+
+      <!-- Order status breakdown -->
+      <div class="tower-panel full-panel">
+        <h2 class="panel-title">Orders by Status</h2>
+        <div class="status-bars" id="statusBars"></div>
+      </div>
+
+      <!-- Team assignment -->
+      <div class="tower-panel full-panel">
+        <h2 class="panel-title">Exceptions by Team</h2>
+        <div id="teamTable"></div>
+      </div>
+
+      <div class="toolbar" style="margin-top:1.5rem">
+        <button class="btn btn-outline" onclick="loadDashboard()">↻ Refresh Dashboard</button>
+        <button class="btn btn-outline" id="adminSimBtn" onclick="openAdminSim()">
+          🔬 Admin: Simulate Rule A Exception
+        </button>
+      </div>
+
+      <!-- Admin sim dialog -->
+      <div class="admin-panel" id="adminPanel" style="display:none">
+        <h3>Admin Simulation — Rule A (Paid Order / Insufficient Stock)</h3>
+        <p>This creates a <em>synthetic</em> order with payment_status=PAID and INSUFFICIENT_STOCK exception.
+           No real payment or stock deduction occurs.</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="adminProductId">Product ID</label>
+            <input type="number" id="adminProductId" value="1" min="1" />
+          </div>
+          <div class="form-group">
+            <label for="adminQty">Quantity (high to force exception)</label>
+            <input type="number" id="adminQty" value="999" min="1" />
+          </div>
+          <div class="form-group">
+            <label for="adminKey">Admin API Key</label>
+            <input type="text" id="adminKey" value="admin-key-change-in-prod" />
+          </div>
+        </div>
+        <div id="adminMsg" role="alert"></div>
+        <button class="btn btn-danger" onclick="runAdminSim()">Run Simulation</button>
+        <button class="btn btn-outline" onclick="document.getElementById('adminPanel').style.display='none'">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>⚡ TechMart — Order Exception Control Tower</span>
+    <span>Internship Demo Project · 2026</span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

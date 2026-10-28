@@ -1,0 +1,113 @@
+# =============================================================================
+# Order Exception Control Tower — Docker Compose
+#
+# IMPORTANT: This file does NOT create a second n8n container.
+# Your existing N8N container runs separately on port 5678.
+#
+# Services defined here:
+#   - db      : MySQL 8.0 (persistent volume)
+#   - backend : Flask API
+#   - frontend: Nginx serving the frontend
+#
+# The Flask backend connects to n8n via host.docker.internal:5678 (Docker Desktop).
+# n8n connects back to Flask via host.docker.internal:5000
+# or via the backend service name if they share a network.
+# =============================================================================
+
+version: "3.9"
+
+services:
+
+  # ── MySQL Database ──────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: oect_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE:      ${DB_NAME:-order_exception_control_tower}
+      MYSQL_USER:          ${DB_USER:-oect_user}
+      MYSQL_PASSWORD:      ${DB_PASSWORD:-oectpassword}
+    ports:
+      - "3307:3306"      # host 3307 → container 3306 (avoids conflict with local MySQL)
+    volumes:
+      - oect_mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    networks:
+      - oect_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ── Flask Backend ───────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: oect_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST:           db
+      DB_PORT:           3306
+      DB_NAME:           ${DB_NAME:-order_exception_control_tower}
+      DB_USER:           ${DB_USER:-oect_user}
+      DB_PASSWORD:       ${DB_PASSWORD:-oectpassword}
+      FLASK_SECRET_KEY:  ${FLASK_SECRET_KEY:-change-me}
+      FLASK_DEBUG:       ${FLASK_DEBUG:-false}
+      FLASK_PORT:        5000
+      WEBHOOK_SECRET:    ${WEBHOOK_SECRET:-webhook-secret-change-in-prod}
+      ADMIN_API_KEY:     ${ADMIN_API_KEY:-admin-key-change-in-prod}
+      # n8n is the existing N8N container; accessible via host from Docker Desktop
+      N8N_WEBHOOK_URL:   ${N8N_WEBHOOK_URL:-http://host.docker.internal:5678/webhook/order-event}
+    ports:
+      - "5000:5000"
+    networks:
+      - oect_net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # Linux compatibility
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Frontend (Nginx) ────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: oect_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    networks:
+      - oect_net
+
+# ── Volumes ─────────────────────────────────────────────────────────────────
+volumes:
+  oect_mysql_data:
+    driver: local
+
+# ── Networks ─────────────────────────────────────────────────────────────────
+networks:
+  oect_net:
+    driver: bridge
+
+# =============================================================================
+# URL Reference:
+#   Browser → Frontend:  http://localhost:8080
+#   Browser → API:       http://localhost:5000
+#   Browser → n8n:       http://localhost:5678
+#   backend → db:        mysql://db:3306
+#   backend → n8n:       http://host.docker.internal:5678 (Docker Desktop)
+#   n8n     → backend:   http://host.docker.internal:5000 (Docker Desktop)
+# =============================================================================

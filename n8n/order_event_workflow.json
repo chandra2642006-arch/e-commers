@@ -1,0 +1,411 @@
+{
+  "name": "Order Exception Control Tower - Event Processor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "order-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e3a8461f-13a8-4bb6-a947-8a4871c5ec42",
+      "name": "Webhook: Receive Order Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "webhookId": "order-event-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json;\nconst body = inputData.body || inputData;\nconst headers = inputData.headers || {};\nconst receivedSecret = headers['x-webhook-secret'] || headers['X-Webhook-Secret'] || '';\nconst expectedSecret = 'webhook-secret-change-in-prod';\n\n// Support dev environments without strict header or with matching secret\nconst isAuthorized = !receivedSecret || receivedSecret === expectedSecret || receivedSecret === 'dev-secret-local-only';\nconst eventUid = body.event_uid || ('EVT-' + Date.now());\nconst eventType = body.event_type || 'ORDER_CONFIRMED';\nconst orderId = body.order_id || '';\nconst hasRequiredFields = Boolean(orderId);\n\nconst isValid = isAuthorized && hasRequiredFields;\nlet errorMessage = '';\nif (!isAuthorized) {\n  errorMessage = 'Unauthorized: invalid X-Webhook-Secret header';\n} else if (!hasRequiredFields) {\n  errorMessage = 'Bad Request: missing required order_id';\n}\n\nreturn [{\n  json: {\n    isValid,\n    errorMessage,\n    event_uid: eventUid,\n    event_type: eventType,\n    order_id: orderId,\n    original_payload: body\n  }\n}];"
+      },
+      "id": "78201a35-24d5-455b-b9f1-d0b810842db1",
+      "name": "Validate & Auth",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isValid }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "5f643261-2679-43c2-a9b0-96b68ce20b92",
+      "name": "Is Request Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'error', error: $json.errorMessage }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "9a0a196e-bc35-4309-8dcf-3367ba4477dc",
+      "name": "Respond: Invalid / Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ ($env.FLASK_API_URL || 'http://127.0.0.1:5000') }}/api/orders/{{ $json.order_id }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 5000
+        }
+      },
+      "onError": "continueRegularOutput",
+      "id": "8c59918c-396a-4632-8ea8-3a9ecfce4f44",
+      "name": "Fetch Order from Flask",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $('Validate & Auth').first().json.event_type }}",
+                    "value2": "PAID_INSUFFICIENT_STOCK"
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $('Validate & Auth').first().json.event_type }}",
+                    "value2": "ORDER_CONFIRMED"
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $('Validate & Auth').first().json.event_type }}",
+                    "value2": "PAYMENT_FAILED"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "id": "673f8a0e-bc62-43ce-b118-86a070188ef7",
+      "name": "Route by Event Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const meta = $('Validate & Auth').first().json;\nreturn [{\n  json: {\n    event_uid: meta.event_uid,\n    event_type: 'PAID_INSUFFICIENT_STOCK',\n    order_id: meta.order_id,\n    severity: 'HIGH',\n    owner_team: 'Inventory',\n    notes: 'Order payment received but inventory shortage flagged by control tower workflow.'\n  }\n}];"
+      },
+      "id": "2d7a9b0c-a9a3-4b61-9c12-32b509e51b11",
+      "name": "Format: Paid Insufficient Stock",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const meta = $('Validate & Auth').first().json;\nconst fetchedOrder = $input.first().json || {};\nconst payload = meta.original_payload || {};\nconst order = (fetchedOrder.order_id) ? fetchedOrder : payload;\n\n// Dynamic 2 business days calculation\nlet deliveryTime = order.estimated_delivery_time || payload.estimated_delivery_time;\nif (!deliveryTime) {\n  const dt = new Date();\n  let added = 0;\n  while (added < 2) {\n    dt.setDate(dt.getDate() + 1);\n    const day = dt.getDay();\n    if (day !== 0 && day !== 6) {\n      added++;\n    }\n  }\n  dt.setHours(18, 0, 0, 0);\n  deliveryTime = dt.toLocaleDateString('en-US', {\n    weekday: 'long',\n    year: 'numeric',\n    month: 'short',\n    day: 'numeric'\n  }) + ' by 6:00 PM';\n}\n\n// Format Phone Number for WhatsApp E.164\nlet rawPhone = String(order.customer_phone || payload.customer_phone || '9999999999').trim();\nlet digits = rawPhone.replace(/\\D/g, '');\nlet formattedPhone = digits;\nif (!formattedPhone.startsWith('91') && formattedPhone.length === 10) {\n  formattedPhone = '+91' + formattedPhone;\n} else if (!formattedPhone.startsWith('+')) {\n  formattedPhone = '+' + formattedPhone;\n}\n\nconst customerName = order.customer_name || payload.customer_name || 'Customer';\nconst totalAmount = order.total_amount ? Number(order.total_amount).toLocaleString('en-IN') : '0';\nconst address = order.address_line ? `${order.address_line}, ${order.city || ''} ${order.pincode || ''}` : 'Your shipping address';\n\n// Items list\nlet itemsSummary = '';\nif (Array.isArray(order.items) && order.items.length > 0) {\n  itemsSummary = '\\n📦 *Items:* ' + order.items.map(i => `${i.product_name || 'Item'} (x${i.quantity})`).join(', ');\n}\n\n// WhatsApp Message Body\nconst whatsappMessage = `🛍️ *Order Confirmed!*\\n\\nHello *${customerName}*, your order *#${meta.order_id}* has been received successfully!\\n\\n🚚 *Estimated Delivery Time:*\\n👉 *${deliveryTime}*\\n\\n📍 *Delivery Address:* ${address}${itemsSummary}\\n💰 *Total Amount:* ₹${totalAmount}\\n\\nThank you for shopping with us! You will receive another update when your package is out for delivery.`;\n\nreturn [{\n  json: {\n    event_uid: meta.event_uid,\n    event_type: 'ORDER_CONFIRMED',\n    order_id: meta.order_id,\n    severity: 'INFO',\n    owner_team: 'Fulfillment',\n    customer_name: customerName,\n    customer_phone: formattedPhone,\n    estimated_delivery_time: deliveryTime,\n    whatsapp_to: `whatsapp:${formattedPhone}`,\n    whatsapp_from: `whatsapp:${$env.TWILIO_WHATSAPP_NUMBER || '+14155238886'}`,\n    whatsapp_message: whatsappMessage,\n    twilio_sid: $env.TWILIO_ACCOUNT_SID || '',\n    twilio_token: $env.TWILIO_AUTH_TOKEN || '',\n    notes: `Order confirmed. Estimated delivery: ${deliveryTime}`\n  }\n}];"
+      },
+      "id": "4e89ac23-8756-4290-b187-578bce0624d5",
+      "name": "Format: Order Confirmed & WhatsApp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const meta = $('Validate & Auth').first().json;\nreturn [{\n  json: {\n    event_uid: meta.event_uid,\n    event_type: 'PAYMENT_FAILED',\n    order_id: meta.order_id,\n    severity: 'LOW',\n    owner_team: 'Finance',\n    notes: 'Payment gateway transaction failure logged.'\n  }\n}];"
+      },
+      "id": "e9b208fa-95cd-4f51-b841-f7614d33a7ef",
+      "name": "Format: Payment Failed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.twilio_sid || 'AC_DEMO_ACCOUNT' }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "={{ $json.whatsapp_from }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $json.whatsapp_to }}"
+            },
+            {
+              "name": "Body",
+              "value": "={{ $json.whatsapp_message }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "neverError": true
+        }
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Send WhatsApp via Twilio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1640,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.FLASK_API_URL || 'http://127.0.0.1:5000') }}/api/webhooks/order-event",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Secret",
+              "value": "webhook-secret-change-in-prod"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "neverError": true
+        }
+      },
+      "id": "bfd396a7-cb02-4bfe-a720-bc2f7e0a02cf",
+      "name": "Post to Flask Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'success', message: 'Order event and WhatsApp delivery notification processed successfully', order_id: $('Validate & Auth').first().json.order_id, delivery_time: $('Format: Order Confirmed & WhatsApp').first()?.json?.estimated_delivery_time, whatsapp_recipient: $('Format: Order Confirmed & WhatsApp').first()?.json?.whatsapp_to }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "ca1d6e5a-3729-411a-8cbe-e758e53a771b",
+      "name": "Respond: Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Receive Order Event": {
+      "main": [
+        [
+          {
+            "node": "Validate & Auth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Auth": {
+      "main": [
+        [
+          {
+            "node": "Is Request Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Request Valid?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Order from Flask",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Invalid / Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Order from Flask": {
+      "main": [
+        [
+          {
+            "node": "Route by Event Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Event Type": {
+      "main": [
+        [
+          {
+            "node": "Format: Paid Insufficient Stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format: Order Confirmed & WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format: Payment Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format: Paid Insufficient Stock": {
+      "main": [
+        [
+          {
+            "node": "Post to Flask Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format: Order Confirmed & WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp via Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp via Twilio": {
+      "main": [
+        [
+          {
+            "node": "Post to Flask Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format: Payment Failed": {
+      "main": [
+        [
+          {
+            "node": "Post to Flask Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Flask Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond: Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true
+}

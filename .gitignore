@@ -1,0 +1,42 @@
+# Git ignore patterns for Order Exception Control Tower
+
+# Environment variables (NEVER commit real secrets)
+.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+*.log
+
+# Node / n8n
+node_modules/
+
+# Database dumps
+*.sql.bak
+*.dump
