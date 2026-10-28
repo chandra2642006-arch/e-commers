@@ -3,7 +3,9 @@
    All API calls go to Flask at http://127.0.0.1:5000
    ============================================================ */
 
-const API = "http://127.0.0.1:5000";
+const API = (typeof window !== "undefined" && window.location.protocol.startsWith("http"))
+  ? window.location.origin
+  : "http://127.0.0.1:5000";
 
 // ---- Product emojis for visual flair ----
 const PRODUCT_EMOJIS = {
