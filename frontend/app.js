@@ -24,6 +24,15 @@ function getApiBaseUrl() {
 
 const API = getApiBaseUrl();
 
+function promptBackendUrl() {
+  const current = localStorage.getItem("techmart_api_url") || API;
+  const nextUrl = prompt("Enter your live Backend API URL (e.g. from your tunnel or cloud host):", current);
+  if (nextUrl !== null && nextUrl.trim()) {
+    localStorage.setItem("techmart_api_url", nextUrl.trim().replace(/\/$/, ""));
+    location.reload();
+  }
+}
+
 // ---- Product emojis for visual flair ----
 const PRODUCT_EMOJIS = {
   "Wireless Headphones": "🎧",
