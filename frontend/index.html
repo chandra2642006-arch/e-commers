@@ -1,564 +1,418 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PRAPCLIK — Premium Futuristic E-Commerce Platform</title>
-  <meta name="description" content="PRAPCLIK: High-performance modern e-commerce marketplace powered by real-time order exception detection and automated operations." />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%236366f1'/><stop offset='50%25' stop-color='%2338bdf8'/><stop offset='100%25' stop-color='%23ec4899'/></linearGradient></defs><rect width='100' height='100' rx='24' fill='%2307090e'/><path d='M30 25 L55 25 C68 25 75 32 75 42 C75 52 68 59 55 59 L45 59 L45 75 L30 75 Z M45 46 L54 46 C60 46 62 43 62 42 C62 40 60 37 54 37 L45 37 Z' fill='url(%23g)'/></svg>" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <title>PRAPCLIK — Online Shopping Site for Electronics, Gadgets & Accessories</title>
+  <meta name="description" content="Shop Electronics, Headphones, Keyboards, Smart Watches & Computer Accessories on PRAPCLIK. Lowest Prices, Free Shipping & Fast Delivery." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%232874F0'/><text x='50%' y='70%' font-size='65' font-weight='800' fill='white' text-anchor='middle' font-family='sans-serif'>P</text></svg>" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- ===================== OPENING INTRO ANIMATION SCREEN ===================== -->
-<div id="prapclikLoader" role="status" aria-label="Loading PRAPCLIK Experience">
-  <div class="loader-container">
-    <div class="loader-orb"></div>
-    <div class="loader-logo-wrapper">
-      <svg class="loader-svg-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="prapclikGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#6366f1" />
-            <stop offset="50%" stop-color="#38bdf8" />
-            <stop offset="100%" stop-color="#ec4899" />
-          </linearGradient>
-        </defs>
-        <rect x="5" y="5" width="90" height="90" rx="26" fill="#0d111a" stroke="url(#prapclikGrad)" stroke-width="4" />
-        <path d="M32 25 H57 C69 25 76 32 76 42 C76 52 69 59 57 59 H47 V75 H32 V25 Z M47 46 H56 C61 46 63 43 63 42 C63 40 61 37 56 37 H47 V46 Z" fill="url(#prapclikGrad)" />
-      </svg>
-      <div class="loader-text">PRAPCLIK</div>
-      <div class="loader-tagline">NEXT-GEN INTELLIGENT COMMERCE</div>
-    </div>
-    <div class="loader-bar-wrap">
-      <div class="loader-progress"></div>
-    </div>
-  </div>
-</div>
+<!-- =============================================================================
+     1. COMMERCIAL HEADER (FLIPKART STYLE)
+     ============================================================================= -->
+<header class="main-header">
+  <div class="header-top">
+    <!-- Brand Logo -->
+    <a href="#" class="brand-container" onclick="showPage('home'); return false;">
+      <div class="brand-title">PRAPCLIK</div>
+      <div class="brand-sub">Explore <span>Plus ✦</span></div>
+    </a>
 
-<!-- ===================== HEADER / NAVIGATION ===================== -->
-<header class="site-header" id="siteHeader">
-  <div class="header-inner">
-    <div class="brand-logo" onclick="navigate('home')">
-      <div class="brand-icon-box">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M30 22 H58 C71 22 78 30 78 41 C78 51 71 59 58 59 H46 V78 H30 V22 Z M46 44 H57 C62 44 64 42 64 41 C64 39 62 36 57 36 H46 V44 Z" fill="url(#prapclikGrad)" />
+    <!-- Large Global Search Bar -->
+    <div class="search-container">
+      <input type="text" class="search-input" id="globalSearchInput" placeholder="Search for products, brands and more" oninput="handleGlobalSearch(this.value)" />
+      <button class="search-icon-btn" aria-label="Search" onclick="handleSearchClick()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-      </div>
-      <span class="brand-name">PRAPCLIK</span>
-      <span class="brand-badge">PRO</span>
+      </button>
     </div>
 
-    <nav class="main-nav" id="mainNav">
-      <a href="#" class="nav-link active" data-page="home" id="nav-home">
-        <span>⚡</span> Home
-      </a>
-      <a href="#" class="nav-link" data-page="products" id="nav-products">
-        <span>🛍️</span> Products
-      </a>
-      <a href="#" class="nav-link" data-page="orders" id="nav-orders">
-        <span>📦</span> My Orders
-      </a>
-      <a href="#" class="nav-link" data-page="support" id="nav-support">
-        <span>🤖</span> Support & AI
-      </a>
-      <a href="#" class="nav-link nav-tower" data-page="tower" id="nav-tower">
-        <span>🗼</span> Control Tower
-      </a>
-    </nav>
-
+    <!-- Header Actions -->
     <div class="header-actions">
-      <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
-        🌙
-      </button>
-      <button class="header-cart-btn" onclick="openCheckout()" title="View Cart">
-        <span>🛒</span>
-        <span class="header-cart-text">Cart</span>
-        <span class="header-cart-badge" id="headerCartCount">0</span>
-      </button>
-      <button class="menu-toggle" id="menuToggle" aria-label="Toggle Mobile Navigation">☰</button>
+      <!-- Login / Account button -->
+      <div id="authHeaderContainer">
+        <button class="header-login-btn" onclick="openLoginModal()">Login</button>
+      </div>
+
+      <!-- My Orders -->
+      <div class="header-link-btn" onclick="showPage('orders')">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span>My Orders</span>
+      </div>
+
+      <!-- Cart Button -->
+      <div class="header-link-btn" onclick="openCheckoutModal()">
+        <div class="cart-icon-wrapper">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span class="cart-badge" id="cartBadgeCount">0</span>
+        </div>
+        <span>Cart</span>
+      </div>
     </div>
   </div>
+
+  <!-- Category Strip Navigation -->
+  <nav class="category-nav-bar">
+    <div class="category-nav-inner">
+      <div class="category-item active" onclick="filterCategory('all', this)">
+        <span class="category-icon">🔥</span>
+        <span>All Products</span>
+      </div>
+      <div class="category-item" onclick="filterCategory('audio', this)">
+        <span class="category-icon">🎧</span>
+        <span>Headphones</span>
+      </div>
+      <div class="category-item" onclick="filterCategory('keyboards', this)">
+        <span class="category-icon">⌨️</span>
+        <span>Keyboards</span>
+      </div>
+      <div class="category-item" onclick="filterCategory('mice', this)">
+        <span class="category-icon">🖱️</span>
+        <span>Mice</span>
+      </div>
+      <div class="category-item" onclick="filterCategory('wearables', this)">
+        <span class="category-icon">⌚</span>
+        <span>Smart Watches</span>
+      </div>
+      <div class="category-item" onclick="filterCategory('accessories', this)">
+        <span class="category-icon">🔌</span>
+        <span>Hubs & Stands</span>
+      </div>
+      <div class="category-item" onclick="showPage('support')">
+        <span class="category-icon">📞</span>
+        <span>Help Centre</span>
+      </div>
+    </div>
+  </nav>
 </header>
 
-<!-- ===================== MAIN PAGES ===================== -->
-<main class="page-container">
+<!-- =============================================================================
+     2. MAIN PAGES CONTAINER
+     ============================================================================= -->
+<main class="main-wrapper">
 
-  <!-- ==================== HOME PAGE ==================== -->
-  <section class="page active" id="page-home">
+  <!-- ==================== PAGE: HOMEPAGE (SHOPPING FIRST) ==================== -->
+  <section class="page-view active" id="view-home">
     
-    <!-- Hero Section -->
-    <div class="hero-wrapper">
-      <div class="hero-glow-blob"></div>
-      <div class="hero-glow-blob-2"></div>
-      <div class="hero-inner">
-        <div class="hero-content">
-          <div class="hero-pill">
-            <span class="hero-pill-dot"></span>
-            PRAPCLIK 2.0 · AUTONOMOUS COMMERCE PLATFORM
-          </div>
-          <h1 class="hero-title">
-            The Future of <span class="hero-highlight">Intelligent</span> Shopping is Here.
-          </h1>
-          <p class="hero-subtitle">
-            Experience lightning-fast checkout, real-time inventory synchronization, and autonomous order exception resolution.
-          </p>
-          <div class="hero-actions">
-            <button class="btn btn-primary" onclick="navigate('products')">
-              Explore Products <span>→</span>
-            </button>
-            <button class="btn btn-outline" onclick="navigate('tower')">
-              Live Control Tower <span>🗼</span>
-            </button>
-          </div>
+    <!-- Big Shopping Offer Banner -->
+    <div class="home-banner-slider">
+      <div class="banner-slide">
+        <div class="banner-content">
+          <h2>Grand Electronics Sale</h2>
+          <p>Up to 50% Off on Top Accessories, Smart Watches & Premium Keyboards</p>
+          <button class="banner-btn" onclick="scrollToProducts()">SHOP NOW</button>
         </div>
+        <div class="banner-graphic">🎧</div>
+      </div>
+    </div>
 
-        <div class="hero-visual-card">
-          <div class="hero-visual-header">
-            <div class="hero-visual-dots">
-              <span class="hero-visual-dot" style="background:#ec4899"></span>
-              <span class="hero-visual-dot" style="background:#f59e0b"></span>
-              <span class="hero-visual-dot" style="background:#10b981"></span>
-            </div>
-            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">SYSTEM OPERATIONAL</span>
-          </div>
-
-          <div style="font-size:0.9rem; font-weight:700; color:#fff; margin-bottom:0.4rem;">
-            PRAPCLIK Autonomous Engine
-          </div>
-          <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.5;">
-            Connected to Flask API, MySQL 8.0 & n8n event dispatcher.
-          </div>
-
-          <div class="hero-stats-row">
-            <div class="hero-stat-box">
-              <div class="hero-stat-num" id="stat-products">—</div>
-              <div class="hero-stat-lbl">Active Gear</div>
-            </div>
-            <div class="hero-stat-box">
-              <div class="hero-stat-num" id="stat-orders">—</div>
-              <div class="hero-stat-lbl">Orders Placed</div>
-            </div>
-            <div class="hero-stat-box">
-              <div class="hero-stat-num" id="stat-exceptions">—</div>
-              <div class="hero-stat-lbl">Exceptions Flagged</div>
-            </div>
-          </div>
+    <!-- Commercial Trust Strip -->
+    <div class="trust-strip">
+      <div class="trust-item">
+        <div class="trust-icon">🚚</div>
+        <div>
+          <div class="trust-text-title">Free & Fast Delivery</div>
+          <div class="trust-text-sub">Dispatched in 2 business days</div>
+        </div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">🛡️</div>
+        <div>
+          <div class="trust-text-title">100% Authentic Products</div>
+          <div class="trust-text-sub">Direct manufacturer warranty</div>
+        </div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">🔄</div>
+        <div>
+          <div class="trust-text-title">7 Days Replacement</div>
+          <div class="trust-text-sub">Hassle-free return policy</div>
+        </div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">💳</div>
+        <div>
+          <div class="trust-text-title">Secure Payments & COD</div>
+          <div class="trust-text-sub">Pay online or on delivery</div>
         </div>
       </div>
     </div>
 
-    <!-- Customer Benefits -->
-    <div class="benefits-grid">
-      <div class="benefit-card">
-        <div class="benefit-icon-box">⚡</div>
-        <div>
-          <div class="benefit-title">Ultra-Fast Dispatch</div>
-          <div class="benefit-desc">Calculated 2-business-day delivery with real-time tracking estimates.</div>
+    <!-- Product Rail 1: Best Deals On Electronics -->
+    <section class="product-rail" id="dealsSection">
+      <div class="rail-header">
+        <div class="rail-title-group">
+          <h2>Best Deals on Electronics</h2>
+          <p>Grab top-rated tech before stock runs out</p>
         </div>
-      </div>
-      <div class="benefit-card">
-        <div class="benefit-icon-box">🛡️</div>
-        <div>
-          <div class="benefit-title">Atomic Stock Guard</div>
-          <div class="benefit-desc">Automated concurrency protection guarantees zero overselling issues.</div>
-        </div>
-      </div>
-      <div class="benefit-card">
-        <div class="benefit-icon-box">💬</div>
-        <div>
-          <div class="benefit-title">Instant Notifications</div>
-          <div class="benefit-desc">Automated WhatsApp & event webhook alerts dispatched via n8n.</div>
-        </div>
-      </div>
-      <div class="benefit-card">
-        <div class="benefit-icon-box">🗼</div>
-        <div>
-          <div class="benefit-title">Active Control Tower</div>
-          <div class="benefit-desc">Transparent operational resolution team monitoring every order.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Featured Products Showcase -->
-    <div class="section-wrapper">
-      <div class="section-header">
-        <div>
-          <div class="section-eyebrow">CURATED SELECTION</div>
-          <h2 class="section-title">Trending Tech & Hardware</h2>
-          <p class="section-sub">Engineered for durability, speed, and modern workspace performance.</p>
-        </div>
-        <button class="btn btn-outline" onclick="navigate('products')">View All Products →</button>
+        <button class="rail-view-all" onclick="filterCategory('all')">VIEW ALL</button>
       </div>
 
-      <div class="product-grid" id="homeProducts">
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
+      <!-- Main Shopping Product Grid -->
+      <div class="product-grid" id="mainProductsGrid">
+        <!-- Rendered dynamically -->
       </div>
-    </div>
+    </section>
 
-    <!-- Special Promo Banner -->
-    <div class="promo-banner">
-      <div>
-        <div class="promo-tag">PRAPCLIK EXCLUSIVE RELEASE</div>
-        <h3 class="promo-title">Upgrade Your Workspace Today</h3>
-        <p class="promo-desc">Receive genuine warranty, instant tracking alerts, and complimentary priority shipping on all orders.</p>
+    <!-- Product Rail 2: Recommended For You -->
+    <section class="product-rail">
+      <div class="rail-header">
+        <div class="rail-title-group">
+          <h2>Trending Workplace Accessories</h2>
+          <p>Comfort and productivity essentials</p>
+        </div>
       </div>
-      <button class="btn btn-primary" onclick="navigate('products')">Shop New Arrivals</button>
-    </div>
+
+      <div class="product-grid" id="trendingProductsGrid">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
 
   </section>
 
-  <!-- ==================== PRODUCTS CATALOG PAGE ==================== -->
-  <section class="page" id="page-products">
-    <div class="section-wrapper">
-      <div class="section-header">
+  <!-- ==================== PAGE: MY ORDERS ==================== -->
+  <section class="page-view" id="view-orders">
+    <div class="orders-page-container">
+      <div class="orders-page-header">
         <div>
-          <div class="section-eyebrow">PRAPCLIK HARDWARE</div>
-          <h1 class="section-title">Product Catalog</h1>
-          <p class="section-sub">Prices include GST. Live inventory synced with MySQL database.</p>
+          <h1 style="font-size:1.4rem; font-weight:700;">My Orders</h1>
+          <p style="color:var(--text-muted); font-size:0.9rem;">Track all your recent purchases and delivery updates</p>
         </div>
+        <button class="rail-view-all" onclick="loadCustomerOrders()">↻ Refresh Orders</button>
       </div>
 
-      <!-- Live Search & Filtering -->
-      <div class="shop-filter-bar">
-        <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" class="search-input" id="productSearchInput" placeholder="Search gadgets, keyboard, headphones, watch..." oninput="handleSearch(this.value)" />
-        </div>
-
-        <div class="filter-categories">
-          <button class="cat-btn active" onclick="filterByCategory('all', this)">All Items</button>
-          <button class="cat-btn" onclick="filterByCategory('audio', this)">Audio</button>
-          <button class="cat-btn" onclick="filterByCategory('peripherals', this)">Peripherals</button>
-          <button class="cat-btn" onclick="filterByCategory('wearables', this)">Wearables</button>
-          <button class="cat-btn" onclick="filterByCategory('accessories', this)">Accessories</button>
-        </div>
-      </div>
-
-      <div class="product-grid" id="productsGrid">
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
+      <div id="ordersListContainer">
+        <!-- Injected dynamically -->
       </div>
     </div>
   </section>
 
-  <!-- ==================== ORDERS PAGE ==================== -->
-  <section class="page" id="page-orders">
-    <div class="section-wrapper">
-      <div class="section-header">
+  <!-- ==================== PAGE: CUSTOMER SUPPORT / HELP CENTRE ==================== -->
+  <section class="page-view" id="view-support">
+    <div class="orders-page-container">
+      <div class="orders-page-header">
         <div>
-          <div class="section-eyebrow">ACCOUNT & FULFILLMENT</div>
-          <h1 class="section-title">Order History</h1>
-          <p class="section-sub">Track real-time shipment progress, delivery schedules, and exception alerts.</p>
-        </div>
-        <button class="btn btn-outline btn-sm" id="refreshOrders" onclick="loadOrders()">
-          ↻ Sync Latest Orders
-        </button>
-      </div>
-
-      <div id="ordersContainer">
-        <div class="loading-msg">Connecting to PRAPCLIK order database…</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==================== SUPPORT & AI ASSISTANT ==================== -->
-  <section class="page" id="page-support">
-    <div class="section-wrapper">
-      <div class="section-header">
-        <div>
-          <div class="section-eyebrow">CUSTOMER CARE</div>
-          <h1 class="section-title">Support & Intelligence Center</h1>
-          <p class="section-sub">Assistance for order tracking, payment methods, delivery inquiries, and exception status.</p>
+          <h1 style="font-size:1.4rem; font-weight:700;">PRAPCLIK Help Centre & 24x7 Support</h1>
+          <p style="color:var(--text-muted); font-size:0.9rem;">We are here to assist with your orders, refunds, and delivery inquiries</p>
         </div>
       </div>
 
-      <div class="support-grid">
-        <div class="support-card">
-          <div class="support-icon">📦</div>
-          <h3>Order Tracking</h3>
-          <p>Verify live progress, estimated delivery times, and status logs in your <a href="#" onclick="navigate('orders')">My Orders</a> dashboard.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin:20px 0;">
+        <div style="border:1px solid var(--border-light); padding:20px; border-radius:4px;">
+          <div style="font-size:2rem; margin-bottom:8px;">📦</div>
+          <h3 style="font-size:1.1rem; margin-bottom:6px;">Track Your Shipment</h3>
+          <p style="color:var(--text-secondary); line-height:1.5;">Check live shipment milestones, tracking numbers and delivery agent updates in <a href="#" style="color:var(--c-blue); font-weight:600;" onclick="showPage('orders'); return false;">My Orders</a>.</p>
         </div>
-        <div class="support-card">
-          <div class="support-icon">💳</div>
-          <h3>Payment Assurance</h3>
-          <p>We support Online simulation and Cash on Delivery with full security protocols and audit logs.</p>
+
+        <div style="border:1px solid var(--border-light); padding:20px; border-radius:4px;">
+          <div style="font-size:2rem; margin-bottom:8px;">💳</div>
+          <h3 style="font-size:1.1rem; margin-bottom:6px;">Payment & Refunds</h3>
+          <p style="color:var(--text-secondary); line-height:1.5;">Support for Online Card/UPI payments and Cash on Delivery. Order cancellations receive instant refund initiation.</p>
         </div>
-        <div class="support-card">
-          <div class="support-icon">🔄</div>
-          <h3>7-Day Hassle-Free Returns</h3>
-          <p>Returns processed within 5 business days with automated inventory restocking.</p>
-        </div>
-        <div class="support-card">
-          <div class="support-icon">🗼</div>
-          <h3>Order Exception Handling</h3>
-          <p>Orders experiencing stock shortages or sync delays are routed directly to the <a href="#" onclick="navigate('tower')">Control Tower</a>.</p>
+
+        <div style="border:1px solid var(--border-light); padding:20px; border-radius:4px;">
+          <div style="font-size:2rem; margin-bottom:8px;">📞</div>
+          <h3 style="font-size:1.1rem; margin-bottom:6px;">Contact Support</h3>
+          <p style="color:var(--text-secondary); line-height:1.5;">Email: <strong>support@prapclik.com</strong><br/>Hours: Mon–Sat, 9:00 AM – 7:00 PM IST</p>
         </div>
       </div>
-
-      <!-- PRAPCLIK AI Shopping Assistant -->
-      <div class="ai-assistant-card">
-        <div>
-          <div class="ai-assistant-header">
-            <span class="ai-pill">PRAPCLIK AI</span>
-            <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:700;">Intelligent Shopping Agent</span>
-          </div>
-          <h2 style="font-family:var(--font-display); font-size:1.8rem; font-weight:800; color:#fff; margin-bottom:0.75rem;">
-            Ask PRAPCLIK Assistant
-          </h2>
-          <p style="font-size:0.95rem; color:var(--text-secondary); line-height:1.6; margin-bottom:1.5rem;">
-            Have questions regarding delivery dates, stock availability, or product compatibility? Ask our assistant for instant recommendations.
-          </p>
-        </div>
-
-        <div class="ai-chat-window">
-          <div class="ai-bubble ai-bubble-bot" id="aiChatResponse">
-            👋 <strong>Hi! I am the PRAPCLIK Assistant.</strong> You can ask me questions like:
-            <br/>• <em>"What is the battery life of the Wireless Headphones?"</em>
-            <br/>• <em>"How fast will my order be delivered?"</em>
-            <br/>• <em>"What switches does the Mechanical Keyboard have?"</em>
-          </div>
-          <form onsubmit="handleAiQuery(event)" class="ai-prompt-input-row">
-            <input type="text" class="ai-prompt-input" id="aiQueryInput" placeholder="Ask anything about our products..." required />
-            <button type="submit" class="btn btn-primary btn-sm">Ask</button>
-          </form>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ==================== CONTROL TOWER ==================== -->
-  <section class="page" id="page-tower">
-    <div class="section-wrapper">
-      <div class="section-header">
-        <div>
-          <div class="section-eyebrow">ENTERPRISE TELEMETRY</div>
-          <h1 class="section-title">🗼 Operations Control Tower</h1>
-          <p class="section-sub">Live monitoring interface for orders, exception pipelines, and automated event workflows.</p>
-        </div>
-        <button class="btn btn-outline btn-sm" onclick="loadDashboard()">
-          ↻ Refresh Dashboard
-        </button>
-      </div>
-
-      <!-- KPI Cards -->
-      <div class="kpi-grid" id="kpiGrid">
-        <div class="kpi-card kpi-blue">
-          <div class="kpi-icon">📋</div>
-          <div class="kpi-val" id="kpi-total">—</div>
-          <div class="kpi-label">Total Orders</div>
-        </div>
-        <div class="kpi-card kpi-red">
-          <div class="kpi-icon">⚠️</div>
-          <div class="kpi-val" id="kpi-exc">—</div>
-          <div class="kpi-label">Open Exceptions</div>
-        </div>
-        <div class="kpi-card kpi-orange">
-          <div class="kpi-icon">🔴</div>
-          <div class="kpi-val" id="kpi-high">—</div>
-          <div class="kpi-label">High / Critical</div>
-        </div>
-        <div class="kpi-card kpi-green">
-          <div class="kpi-icon">💰</div>
-          <div class="kpi-val" id="kpi-revenue">—</div>
-          <div class="kpi-label">Revenue (Paid)</div>
-        </div>
-      </div>
-
-      <div class="tower-two-col">
-        <!-- Exceptions table -->
-        <div class="tower-panel">
-          <h2 class="panel-title"><span>⚠️</span> Open Exceptions</h2>
-          <div id="exceptionsTable"></div>
-        </div>
-        <!-- Recent events -->
-        <div class="tower-panel">
-          <h2 class="panel-title"><span>⚡</span> Recent Automation Events</h2>
-          <div id="eventsTable"></div>
-        </div>
-      </div>
-
-      <!-- Order status breakdown -->
-      <div class="tower-panel full-panel" style="margin-bottom:1.5rem;">
-        <h2 class="panel-title"><span>📊</span> Orders by Status</h2>
-        <div class="status-bars" id="statusBars"></div>
-      </div>
-
-      <!-- Team assignment -->
-      <div class="tower-panel full-panel">
-        <h2 class="panel-title"><span>👥</span> Exceptions by Operations Team</h2>
-        <div id="teamTable"></div>
-      </div>
-
-      <div style="margin-top:2rem; display:flex; gap:1rem; align-items:center;">
-        <button class="btn btn-outline" id="adminSimBtn" onclick="openAdminSim()">
-          🔬 Admin: Simulate Rule A Exception
-        </button>
-      </div>
-
-      <!-- Admin sim dialog -->
-      <div class="admin-panel" id="adminPanel" style="display:none">
-        <h3>Admin Simulation — Rule A (Paid Order / Insufficient Stock)</h3>
-        <p>Creates a simulated order with payment_status=PAID and forces an INSUFFICIENT_STOCK exception for n8n validation testing.</p>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="adminProductId">Product ID</label>
-            <input type="number" id="adminProductId" value="4" min="1" />
-          </div>
-          <div class="form-group">
-            <label for="adminQty">Quantity (high to exceed stock)</label>
-            <input type="number" id="adminQty" value="999" min="1" />
-          </div>
-          <div class="form-group">
-            <label for="adminKey">Admin API Key</label>
-            <input type="text" id="adminKey" value="admin-key-change-in-prod" />
-          </div>
-        </div>
-        <div id="adminMsg" role="alert"></div>
-        <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
-          <button class="btn btn-danger" onclick="runAdminSim()">Run Simulation</button>
-          <button class="btn btn-outline" onclick="document.getElementById('adminPanel').style.display='none'">Cancel</button>
-        </div>
-      </div>
-
     </div>
   </section>
 
 </main>
 
-<!-- ===================== CHECKOUT MODAL ===================== -->
-<div class="modal-overlay" id="checkoutModal">
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
-    <button class="modal-close" id="closeCheckout" aria-label="Close Checkout">&times;</button>
-    <div class="modal-title-row">
-      <span style="font-size:1.6rem;">🛍️</span>
-      <h2 id="checkoutTitle">PRAPCLIK Express Checkout</h2>
+<!-- =============================================================================
+     3. LOGIN & OTP MODAL (FLIPKART STYLE)
+     ============================================================================= -->
+<div class="modal-backdrop" id="loginModal">
+  <div class="login-dialog">
+    <!-- Left Banner -->
+    <div class="login-left-banner">
+      <div>
+        <div class="login-left-title">Login</div>
+        <div class="login-left-sub">Get access to your Orders, Wishlist and Recommendations on PRAPCLIK</div>
+      </div>
+      <div class="login-graphic">🛍️</div>
     </div>
 
-    <form id="checkoutForm" novalidate>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="custName">Full Name *</label>
-          <input type="text" id="custName" placeholder="Ravi Kumar" required />
+    <!-- Right Form Content -->
+    <div class="login-right-content">
+      <button class="modal-close-btn" onclick="closeLoginModal()">&times;</button>
+      
+      <!-- Step 1: Mobile Input Screen -->
+      <div id="loginStepPhone">
+        <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:18px;">Enter Mobile Number</h3>
+        
+        <div class="input-group-phone">
+          <div class="phone-code">+91</div>
+          <input type="tel" class="phone-input" id="loginMobileInput" placeholder="Enter 10-digit mobile number" maxlength="10" />
         </div>
-        <div class="form-group">
-          <label for="custEmail">Email Address *</label>
-          <input type="email" id="custEmail" placeholder="ravi@example.com" required />
+
+        <div class="terms-text">
+          By continuing, you agree to PRAPCLIK's <a href="#">Terms of Use</a> and <a href="#">Privacy Policy</a>.
         </div>
+
+        <button class="btn-continue" onclick="handlePhoneContinue()">CONTINUE</button>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="custPhone">Phone Number *</label>
-          <input type="tel" id="custPhone" placeholder="9876543210" required />
+      <!-- Step 2: OTP Verification Screen -->
+      <div id="loginStepOtp" style="display:none;">
+        <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:8px;">Verify with OTP</h3>
+        <p class="otp-display-message">Sent to +91 <strong id="otpTargetMobile">9876543210</strong> (<a href="#" style="color:var(--c-blue);" onclick="backToPhoneStep(); return false;">Change</a>)</p>
+
+        <div class="otp-box-row">
+          <input type="text" class="otp-input-box" maxlength="1" oninput="focusNextOtp(this, 1)" />
+          <input type="text" class="otp-input-box" maxlength="1" oninput="focusNextOtp(this, 2)" />
+          <input type="text" class="otp-input-box" maxlength="1" oninput="focusNextOtp(this, 3)" />
+          <input type="text" class="otp-input-box" maxlength="1" oninput="focusNextOtp(this, 4)" />
         </div>
-        <div class="form-group">
-          <label for="custPincode">Pincode *</label>
-          <input type="text" id="custPincode" placeholder="560001" required />
+
+        <button class="btn-continue" onclick="verifyOtpAndLogin()">VERIFY & LOGIN</button>
+
+        <div class="resend-timer-text">
+          Didn't receive OTP? <button class="resend-btn" id="resendOtpBtn" onclick="resendOtp()">Resend OTP</button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div class="form-group full-width">
-        <label for="custAddress">Delivery Address *</label>
-        <input type="text" id="custAddress" placeholder="Apartment, Street, Area" required />
+<!-- =============================================================================
+     4. CHECKOUT / CART MODAL
+     ============================================================================= -->
+<div class="modal-backdrop" id="checkoutModal">
+  <div class="checkout-dialog">
+    <button class="modal-close-btn" onclick="closeCheckoutModal()">&times;</button>
+    <div class="checkout-header-title">
+      <span>🛍️</span>
+      <span>Review Order & Checkout</span>
+    </div>
+
+    <form id="orderCheckoutForm" onsubmit="handlePlaceOrder(event)">
+      <!-- Order Items Summary -->
+      <div class="cart-items-preview" id="checkoutCartItems">
+        <!-- Rendered items -->
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="custCity">City *</label>
-          <input type="text" id="custCity" placeholder="Bengaluru" required />
+      <!-- Customer Address Details -->
+      <h4 style="font-size:1rem; font-weight:700; margin-bottom:12px;">Delivery Address</h4>
+      <div class="checkout-form-grid">
+        <div class="form-field">
+          <label for="formName">Full Name *</label>
+          <input type="text" id="formName" placeholder="e.g. Rahul Sharma" required />
         </div>
-        <div class="form-group">
-          <label for="payMethod">Payment Method *</label>
-          <select id="payMethod">
-            <option value="ONLINE">💳 Online Payment (Instant Confirmation)</option>
-            <option value="COD">🚚 Cash on Delivery (Pay on Arrival)</option>
+        <div class="form-field">
+          <label for="formPhone">10-Digit Mobile *</label>
+          <input type="tel" id="formPhone" placeholder="9876543210" maxlength="10" required />
+        </div>
+        <div class="form-field">
+          <label for="formEmail">Email Address *</label>
+          <input type="email" id="formEmail" placeholder="rahul@example.com" required />
+        </div>
+        <div class="form-field">
+          <label for="formPincode">Pincode *</label>
+          <input type="text" id="formPincode" placeholder="560001" required />
+        </div>
+        <div class="form-field full">
+          <label for="formAddress">Street Address / House No. *</label>
+          <input type="text" id="formAddress" placeholder="Flat, Street, Landmark" required />
+        </div>
+        <div class="form-field">
+          <label for="formCity">City / District *</label>
+          <input type="text" id="formCity" placeholder="Bengaluru" required />
+        </div>
+        <div class="form-field">
+          <label for="formPaymentMethod">Payment Mode *</label>
+          <select id="formPaymentMethod">
+            <option value="ONLINE">Online Payment (UPI / Cards / NetBanking)</option>
+            <option value="COD">Cash on Delivery (Pay on Arrival)</option>
           </select>
         </div>
       </div>
 
-      <!-- Cart summary -->
-      <div class="cart-summary" id="cartSummary"></div>
-
-      <div class="order-total-row">
+      <!-- Bill summary -->
+      <div class="checkout-bill-row">
         <span>Total Payable:</span>
-        <span class="order-total-amount" id="checkoutTotal">₹0</span>
+        <span style="color:var(--text-main);" id="checkoutTotalAmount">₹0</span>
       </div>
 
-      <div id="checkoutMsg" role="alert"></div>
-      <button type="submit" class="btn btn-primary full-width" id="placeOrderBtn">
-        Confirm & Place Order <span>→</span>
-      </button>
+      <div id="checkoutNoticeMsg" style="margin-top:10px;"></div>
+
+      <button type="submit" class="btn-confirm-order" id="confirmOrderBtn">PLACE ORDER</button>
     </form>
   </div>
 </div>
 
-<!-- Floating Cart Button -->
-<button class="cart-fab" id="cartFab" title="View Cart" style="display:none" onclick="openCheckout()">
-  <span>🛒</span>
-  <span>Cart</span>
-  <span class="cart-count" id="cartCount">0</span>
-</button>
+<!-- =============================================================================
+     5. TOAST NOTIFICATION
+     ============================================================================= -->
+<div class="prapclik-toast" id="prapclikToast"></div>
 
-<!-- ===================== FOOTER ===================== -->
-<footer class="site-footer">
-  <div class="footer-container">
-    <div class="footer-top-grid">
-      <div>
-        <div class="brand-logo" onclick="navigate('home')">
-          <div class="brand-icon-box">
-            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M30 22 H58 C71 22 78 30 78 41 C78 51 71 59 58 59 H46 V78 H30 V22 Z M46 44 H57 C62 44 64 42 64 41 C64 39 62 36 57 36 H46 V44 Z" fill="url(#prapclikGrad)" />
-            </svg>
-          </div>
-          <span class="brand-name">PRAPCLIK</span>
-        </div>
-        <p class="footer-desc">
-          Next-generation e-commerce platform delivering high-performance tech hardware backed by autonomous event management.
-        </p>
-      </div>
-
-      <div>
-        <div class="footer-col-title">Navigation</div>
-        <ul class="footer-links">
-          <li><a href="#" onclick="navigate('home')">Home</a></li>
-          <li><a href="#" onclick="navigate('products')">All Products</a></li>
-          <li><a href="#" onclick="navigate('orders')">Order History</a></li>
-          <li><a href="#" onclick="navigate('tower')">Control Tower</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <div class="footer-col-title">Support & Policy</div>
-        <ul class="footer-links">
-          <li><a href="#" onclick="navigate('support')">Customer Support</a></li>
-          <li><a href="#" onclick="navigate('support')">7-Day Return Policy</a></li>
-          <li><a href="#" onclick="navigate('support')">WhatsApp Alerts</a></li>
-          <li><a href="mailto:support@prapclik.com">support@prapclik.com</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <div class="footer-col-title">Stay Connected</div>
-        <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
-          Subscribe to PRAPCLIK product drop announcements and firmware updates.
-        </p>
-        <form class="newsletter-form" onsubmit="event.preventDefault(); showToast('Subscribed to PRAPCLIK updates!'); this.reset();">
-          <input type="email" class="newsletter-input" placeholder="Enter your email" required />
-          <button type="submit" class="btn btn-primary btn-sm">Join</button>
-        </form>
-      </div>
+<!-- =============================================================================
+     6. COMMERCIAL FOOTER
+     ============================================================================= -->
+<footer class="main-footer">
+  <div class="footer-inner-grid">
+    <div>
+      <div class="footer-col-title">ABOUT</div>
+      <ul class="footer-nav-list">
+        <li><a href="#" onclick="showPage('support'); return false;">Contact Us</a></li>
+        <li><a href="#">About PRAPCLIK</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">PRAPCLIK Stories</a></li>
+        <li><a href="#">Corporate Information</a></li>
+      </ul>
     </div>
 
-    <div class="footer-bottom-row">
-      <span>© 2026 PRAPCLIK Technologies Inc. All rights reserved.</span>
-      <span>Engineered with Precision · MySQL · Flask · n8n</span>
+    <div>
+      <div class="footer-col-title">HELP</div>
+      <ul class="footer-nav-list">
+        <li><a href="#" onclick="showPage('support'); return false;">Payments</a></li>
+        <li><a href="#" onclick="showPage('orders'); return false;">Shipping</a></li>
+        <li><a href="#" onclick="showPage('support'); return false;">Cancellation & Returns</a></li>
+        <li><a href="#" onclick="showPage('support'); return false;">FAQ</a></li>
+      </ul>
     </div>
+
+    <div>
+      <div class="footer-col-title">CONSUMER POLICY</div>
+      <ul class="footer-nav-list">
+        <li><a href="#">Cancellation & Returns</a></li>
+        <li><a href="#">Terms Of Use</a></li>
+        <li><a href="#">Security</a></li>
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Sitemap</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="footer-col-title">REGISTERED OFFICE ADDRESS</div>
+      <p style="color:#FFFFFF; line-height:1.6; font-size:0.85rem; opacity:0.85;">
+        PRAPCLIK Internet Private Limited,<br/>
+        Outer Ring Road, Devarabeesanahalli Village,<br/>
+        Bengaluru, 560103, Karnataka, India<br/>
+        CIN: U51109KA2026PTC066107<br/>
+        Telephone: 1800 202 9898
+      </p>
+    </div>
+  </div>
+
+  <div class="footer-bottom-bar">
+    <span>© 2026 PRAPCLIK.com — All Rights Reserved</span>
+    <span>Become a Seller &nbsp;|&nbsp; Advertise &nbsp;|&nbsp; Gift Cards &nbsp;|&nbsp; Help Centre</span>
   </div>
 </footer>
 
