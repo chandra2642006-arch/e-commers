@@ -6,8 +6,10 @@
 // Configurable backend API URL:
 // 1. window.TECHMART_API_BASE_URL (if injected by window/build)
 // 2. localStorage.getItem("techmart_api_url") (user can switch endpoint if needed)
-// 3. window.location.origin (for same-domain/proxy deployment or local Flask)
+// 3. Fallback live tunnel for production hosting
 // 4. Default to http://127.0.0.1:5000 for local dev
+const DEFAULT_LIVE_BACKEND = "https://eff32941ce0fff.lhr.life";
+
 function getApiBaseUrl() {
   if (typeof window === "undefined") return "http://127.0.0.1:5000";
   if (window.TECHMART_API_BASE_URL) return window.TECHMART_API_BASE_URL;
@@ -17,7 +19,8 @@ function getApiBaseUrl() {
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return window.location.port === "5000" ? window.location.origin : "http://127.0.0.1:5000";
     }
-    return window.location.origin;
+    // Running on remote host like Vercel — use active tunnel
+    return DEFAULT_LIVE_BACKEND;
   }
   return "http://127.0.0.1:5000";
 }
