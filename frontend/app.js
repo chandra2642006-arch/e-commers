@@ -52,28 +52,11 @@ function saveLocalOrder(ord) {
 }
 
 function updateBackendStatusBadge(isOnline) {
-  const btn = document.getElementById("apiConfigBtn");
-  if (!btn) return;
-  if (isOnline) {
-    btn.innerHTML = "🟢 API Connected";
-    btn.style.color = "#16a34a";
-  } else {
-    btn.innerHTML = "⚙️ Demo (Connect API)";
-    btn.style.color = "#d97706";
-  }
+  // Clean navbar - no dev/demo badges displayed
 }
 
 function promptBackendUrl() {
-  const current = localStorage.getItem("techmart_api_url") || API;
-  const nextUrl = prompt("Enter your live Backend API URL (or leave blank for local/demo):", current);
-  if (nextUrl !== null) {
-    if (nextUrl.trim()) {
-      localStorage.setItem("techmart_api_url", nextUrl.trim().replace(/\/$/, ""));
-    } else {
-      localStorage.removeItem("techmart_api_url");
-    }
-    location.reload();
-  }
+  // Clean navbar
 }
 
 // ---- Product emojis for visual flair ----
@@ -366,7 +349,6 @@ document.getElementById("checkoutForm").addEventListener("submit", async e => {
     🚚 <strong>Estimated Delivery:</strong> ${esc(delivery)}<br/>
     ${!isExc ? `<span style="display:inline-block;margin-top:6px;font-size:0.9em;color:#15803d;background:#dcfce7;padding:3px 8px;border-radius:6px;">📲 WhatsApp notification triggered for <strong>${esc(ord.customer_phone || "")}</strong></span><br/>` : ""}
     ${isExc ? "⚠️ Insufficient stock detected. Operations team notified." : ""}
-    <br/><small>Demo order processed with real-time delivery estimation.</small>
   </div>`;
 
   // Clear cart and reset form on success
