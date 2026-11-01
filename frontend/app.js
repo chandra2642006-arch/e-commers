@@ -91,6 +91,7 @@ let productsCache = []; // fetched products
 // Navigation
 // ============================================================
 function navigate(page) {
+  if (!page) return;
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-link").forEach(a => a.classList.remove("active"));
   const pageEl = document.getElementById("page-" + page);
@@ -105,7 +106,7 @@ function navigate(page) {
   if (page === "tower")    loadDashboard();
 }
 
-document.querySelectorAll(".nav-link").forEach(link => {
+document.querySelectorAll(".nav-link[data-page]").forEach(link => {
   link.addEventListener("click", e => {
     e.preventDefault();
     navigate(link.dataset.page);
@@ -471,7 +472,8 @@ async function loadOrders() {
 // Control Tower / Dashboard
 // ============================================================
 async function loadDashboard() {
-  let data = null;
+  try {
+    let data = null;
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2500);
