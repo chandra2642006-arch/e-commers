@@ -1,25 +1,22 @@
 /* ============================================================
-   TechMart — Frontend JavaScript
-   All API calls go to Flask at http://127.0.0.1:5000
+   PRAPCLIK — Modern Autonomous E-Commerce Platform
+   Frontend Application Script
    ============================================================ */
 
-// Configurable backend API URL:
-// 1. window.TECHMART_API_BASE_URL (if injected by window/build)
-// 2. localStorage.getItem("techmart_api_url") (user can switch endpoint if needed)
-// 3. Fallback live tunnel for production hosting
-// 4. Default to http://127.0.0.1:5000 for local dev
+// Live Backend API resolution
 const DEFAULT_LIVE_BACKEND = "https://eff32941ce0fff.lhr.life";
 
 function getApiBaseUrl() {
   if (typeof window === "undefined") return "http://127.0.0.1:5000";
+  if (window.PRAPCLIK_API_BASE_URL) return window.PRAPCLIK_API_BASE_URL;
   if (window.TECHMART_API_BASE_URL) return window.TECHMART_API_BASE_URL;
-  const stored = localStorage.getItem("techmart_api_url");
+  const stored = localStorage.getItem("prapclik_api_url") || localStorage.getItem("techmart_api_url");
   if (stored) return stored;
   if (window.location.protocol.startsWith("http")) {
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return window.location.port === "5000" ? window.location.origin : "http://127.0.0.1:5000";
     }
-    // Running on remote host like Vercel — use active tunnel
+    // Remote host (Vercel) uses active public tunnel
     return DEFAULT_LIVE_BACKEND;
   }
   return "http://127.0.0.1:5000";
@@ -27,19 +24,19 @@ function getApiBaseUrl() {
 
 const API = getApiBaseUrl();
 
-// Standalone seed products so store works immediately even without active backend
+// Standalone seed products for instant display
 const SEED_PRODUCTS = [
-  { product_id: 1, name: "Wireless Headphones", price: 2499.00, stock_qty: 10, description: "Bluetooth 5.3, 40-hour battery, active noise cancellation, foldable design." },
-  { product_id: 2, name: "Mechanical Keyboard", price: 3999.00, stock_qty: 8, description: "TKL layout, tactile blue switches, RGB backlight, USB-C detachable cable." },
-  { product_id: 3, name: "Ergonomic Mouse", price: 1299.00, stock_qty: 15, description: "Vertical grip, 6 programmable buttons, 4000 DPI, silent click." },
-  { product_id: 4, name: "Smart Watch", price: 7999.00, stock_qty: 5, description: "Health tracking, GPS, 7-day battery, IP68 waterproof, AMOLED display." },
-  { product_id: 5, name: "USB-C Hub 7-in-1", price: 1599.00, stock_qty: 20, description: "HDMI 4K, 3x USB-A, SD card, 100W PD charging, aluminium shell." },
-  { product_id: 6, name: "Laptop Stand", price: 799.00, stock_qty: 25, description: "Adjustable aluminium stand, 10–15 inch, ergonomic angle, portable." }
+  { product_id: 4, name: "Wireless Headphones", price: 2499.00, stock_qty: 10, description: "Bluetooth 5.3, 40-hour battery, active noise cancellation, foldable design." },
+  { product_id: 5, name: "Mechanical Keyboard", price: 3999.00, stock_qty: 8, description: "TKL layout, tactile blue switches, RGB backlight, USB-C detachable cable." },
+  { product_id: 6, name: "Ergonomic Mouse", price: 1299.00, stock_qty: 15, description: "Vertical grip, 6 programmable buttons, 4000 DPI, silent click." },
+  { product_id: 7, name: "Smart Watch", price: 7999.00, stock_qty: 5, description: "Health tracking, GPS, 7-day battery, IP68 waterproof, AMOLED display." },
+  { product_id: 8, name: "USB-C Hub 7-in-1", price: 1599.00, stock_qty: 20, description: "HDMI 4K, 3x USB-A, SD card, 100W PD charging, aluminium shell." },
+  { product_id: 9, name: "Laptop Stand", price: 799.00, stock_qty: 25, description: "Adjustable aluminium stand, 10–15 inch, ergonomic angle, portable." }
 ];
 
 function getLocalOrders() {
   try {
-    return JSON.parse(localStorage.getItem("techmart_local_orders") || "[]");
+    return JSON.parse(localStorage.getItem("prapclik_orders") || localStorage.getItem("techmart_local_orders") || "[]");
   } catch (_) { return []; }
 }
 
@@ -47,19 +44,12 @@ function saveLocalOrder(ord) {
   try {
     const list = getLocalOrders();
     list.unshift(ord);
+    localStorage.setItem("prapclik_orders", JSON.stringify(list.slice(0, 50)));
     localStorage.setItem("techmart_local_orders", JSON.stringify(list.slice(0, 50)));
   } catch (_) {}
 }
 
-function updateBackendStatusBadge(isOnline) {
-  // Clean navbar - no dev/demo badges displayed
-}
-
-function promptBackendUrl() {
-  // Clean navbar
-}
-
-// ---- Product emojis for visual flair ----
+// Visual icons & category mappings
 const PRODUCT_EMOJIS = {
   "Wireless Headphones": "🎧",
   "Mechanical Keyboard": "⌨️",
@@ -69,9 +59,20 @@ const PRODUCT_EMOJIS = {
   "Laptop Stand":        "💻",
 };
 
-// ---- Cart state ----
+const PRODUCT_CATEGORIES = {
+  "Wireless Headphones": "audio",
+  "Mechanical Keyboard": "peripherals",
+  "Ergonomic Mouse":     "peripherals",
+  "Smart Watch":         "wearables",
+  "USB-C Hub 7-in-1":   "accessories",
+  "Laptop Stand":        "accessories",
+};
+
+// Cart state & Cache
 let cart = {};          // { product_id: {product, qty} }
 let productsCache = []; // fetched products
+let activeCategory = "all";
+let activeSearchQuery = "";
 
 // ============================================================
 // Navigation
@@ -80,10 +81,17 @@ function navigate(page) {
   if (!page) return;
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-link").forEach(a => a.classList.remove("active"));
+
   const pageEl = document.getElementById("page-" + page);
   const navEl  = document.getElementById("nav-" + page);
   if (pageEl) pageEl.classList.add("active");
   if (navEl)  navEl.classList.add("active");
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Close mobile nav if open
+  const mainNav = document.getElementById("mainNav");
+  if (mainNav) mainNav.classList.remove("open");
 
   // Load page data
   if (page === "home")    loadHome();
@@ -99,12 +107,39 @@ document.querySelectorAll(".nav-link[data-page]").forEach(link => {
   });
 });
 
-document.querySelector(".logo").addEventListener("click", () => navigate("home"));
-
-// Mobile menu
+// Mobile menu toggle
 const menuToggle = document.getElementById("menuToggle");
 const mainNav    = document.getElementById("mainNav");
-menuToggle.addEventListener("click", () => mainNav.classList.toggle("open"));
+if (menuToggle && mainNav) {
+  menuToggle.addEventListener("click", () => mainNav.classList.toggle("open"));
+}
+
+// Header scroll effect
+window.addEventListener("scroll", () => {
+  const header = document.getElementById("siteHeader");
+  if (!header) return;
+  if (window.scrollY > 20) {
+    header.classList.add("scrolled");
+  } else {
+    header.classList.remove("scrolled");
+  }
+});
+
+// Theme switcher
+const themeToggleBtn = document.getElementById("themeToggleBtn");
+if (themeToggleBtn) {
+  const currentTheme = localStorage.getItem("prapclik_theme") || "dark";
+  document.documentElement.setAttribute("data-theme", currentTheme);
+  themeToggleBtn.textContent = currentTheme === "dark" ? "🌙" : "☀️";
+
+  themeToggleBtn.addEventListener("click", () => {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const nextTheme = isDark ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    localStorage.setItem("prapclik_theme", nextTheme);
+    themeToggleBtn.textContent = nextTheme === "dark" ? "🌙" : "☀️";
+  });
+}
 
 // ============================================================
 // Home page
@@ -117,43 +152,80 @@ async function loadHome() {
     const dash = await fetch(API + "/api/dashboard").then(r => r.json());
     document.getElementById("stat-orders").textContent     = dash.total_orders ?? "—";
     document.getElementById("stat-exceptions").textContent = dash.total_exceptions ?? "—";
-    updateBackendStatusBadge(true);
   } catch (_) {
     const localOrders = getLocalOrders();
     document.getElementById("stat-orders").textContent     = localOrders.length;
     document.getElementById("stat-exceptions").textContent = 0;
-    updateBackendStatusBadge(false);
   }
 
   // Show first 3 products in hero
   const grid = document.getElementById("homeProducts");
   const prods = products.slice(0, 3);
-  grid.innerHTML = prods.length ? prods.map(renderProductCard).join("") : "<p class='empty-state'>Loading products…</p>";
+  grid.innerHTML = prods.length ? prods.map(renderProductCard).join("") : "<p class='empty-state'>Loading PRAPCLIK hardware…</p>";
 }
 
 // ============================================================
-// Products page
+// Products page & Filtering
 // ============================================================
 async function loadProducts() {
-  const grid = document.getElementById("productsGrid");
   const products = await fetchProducts();
-  grid.innerHTML = products.length
-    ? products.map(renderProductCard).join("")
-    : "<p class='empty-state'>Loading catalog…</p>";
+  renderProductsList(products);
+}
+
+function filterByCategory(category, btnElement) {
+  activeCategory = category;
+  document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+  if (btnElement) btnElement.classList.add("active");
+  renderProductsList(productsCache);
+}
+
+function handleSearch(query) {
+  activeSearchQuery = (query || "").trim().toLowerCase();
+  renderProductsList(productsCache);
+}
+
+function renderProductsList(products) {
+  const grid = document.getElementById("productsGrid");
+  if (!grid) return;
+
+  let filtered = products;
+
+  // Filter by category
+  if (activeCategory !== "all") {
+    filtered = filtered.filter(p => PRODUCT_CATEGORIES[p.name] === activeCategory);
+  }
+
+  // Filter by search query
+  if (activeSearchQuery) {
+    filtered = filtered.filter(p => 
+      p.name.toLowerCase().includes(activeSearchQuery) || 
+      (p.description && p.description.toLowerCase().includes(activeSearchQuery))
+    );
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 4rem 1rem;">
+      <div style="font-size:3rem; margin-bottom:1rem;">🔍</div>
+      <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:0.5rem;">No matching hardware found</h3>
+      <p style="color:var(--text-secondary); font-size:0.9rem;">Try searching for "headphones", "keyboard", "mouse", or change category.</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(renderProductCard).join("");
 }
 
 async function fetchProducts() {
   if (productsCache.length) return productsCache;
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2500);
+    const timer = setTimeout(() => controller.abort(), 2800);
     const res = await fetch(API + "/api/products", { signal: controller.signal });
     clearTimeout(timer);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         productsCache = data;
-        updateBackendStatusBadge(true);
         return productsCache;
       }
     }
@@ -161,29 +233,42 @@ async function fetchProducts() {
 
   // Fallback: seed products so store works immediately
   productsCache = [...SEED_PRODUCTS];
-  updateBackendStatusBadge(false);
   return productsCache;
 }
 
 function renderProductCard(p) {
   const emoji = PRODUCT_EMOJIS[p.name] || "📦";
   const stockClass = p.stock_qty === 0 ? "stock-out" : p.stock_qty <= 3 ? "stock-low" : "";
-  const stockText  = p.stock_qty === 0 ? "Out of Stock" : p.stock_qty <= 3 ? `Only ${p.stock_qty} left!` : `${p.stock_qty} in stock`;
+  const stockText  = p.stock_qty === 0 ? "Out of Stock" : p.stock_qty <= 3 ? `Only ${p.stock_qty} units left` : `${p.stock_qty} in stock`;
   const inCart     = cart[p.product_id] ? cart[p.product_id].qty : 1;
   const disabled   = p.stock_qty === 0 ? "disabled" : "";
+  const category   = (PRODUCT_CATEGORIES[p.name] || "Hardware").toUpperCase();
 
   return `<div class="product-card" id="pcard-${p.product_id}">
-    <div class="product-emoji">${emoji}</div>
+    <div class="product-card-top">
+      <span class="product-badge-tag">${category}</span>
+      <span class="product-stock ${stockClass}">${stockText}</span>
+    </div>
+    
+    <div class="product-emoji-wrap">${emoji}</div>
     <div class="product-name">${esc(p.name)}</div>
     <div class="product-desc">${esc(p.description || "")}</div>
-    <div class="product-price">₹${p.price.toLocaleString("en-IN")}</div>
-    <div class="product-stock ${stockClass}">${stockText}</div>
-    <div class="qty-row">
-      <input type="number" class="qty-input" id="qty-${p.product_id}"
-             value="${inCart}" min="1" max="${Math.max(p.stock_qty, 1)}"
-             ${p.stock_qty === 0 ? "disabled" : ""} />
-      <button class="btn btn-primary btn-sm" ${disabled}
-              onclick="addToCart(${p.product_id})">Add to Cart</button>
+
+    <div class="product-footer-row">
+      <div class="product-price-block">
+        <span class="product-price-label">Price (GST incl.)</span>
+        <span class="product-price">₹${p.price.toLocaleString("en-IN")}</span>
+      </div>
+
+      <div class="qty-row">
+        <input type="number" class="qty-input" id="qty-${p.product_id}"
+               value="${inCart}" min="1" max="${Math.max(p.stock_qty, 1)}"
+               ${p.stock_qty === 0 ? "disabled" : ""} />
+        <button class="btn btn-primary btn-sm" ${disabled}
+                onclick="addToCart(${p.product_id})">
+          <span>+</span> Add
+        </button>
+      </div>
     </div>
   </div>`;
 }
@@ -193,7 +278,7 @@ function addToCart(productId) {
   if (!product) return;
   const qtyEl = document.getElementById("qty-" + productId);
   const qty   = parseInt(qtyEl.value) || 1;
-  if (qty < 1) { alert("Please enter a valid quantity."); return; }
+  if (qty < 1) { showToast("Please enter a valid quantity."); return; }
 
   cart[productId] = { product, qty };
   updateCartFab();
@@ -202,18 +287,25 @@ function addToCart(productId) {
 
 function updateCartFab() {
   const fab   = document.getElementById("cartFab");
-  const count = Object.keys(cart).length;
-  document.getElementById("cartCount").textContent = count;
-  fab.style.display = count > 0 ? "flex" : "none";
+  const count = Object.values(cart).reduce((sum, it) => sum + it.qty, 0);
+  
+  const countEl = document.getElementById("cartCount");
+  if (countEl) countEl.textContent = count;
+
+  const headerCountEl = document.getElementById("headerCartCount");
+  if (headerCountEl) headerCountEl.textContent = count;
+
+  if (fab) fab.style.display = count > 0 ? "flex" : "none";
 }
 
-document.getElementById("cartFab").addEventListener("click", openCheckout);
-
 // ============================================================
-// Checkout
+// Checkout Modal
 // ============================================================
 function openCheckout() {
-  if (Object.keys(cart).length === 0) { showToast("Your cart is empty."); return; }
+  if (Object.keys(cart).length === 0) { 
+    showToast("Your PRAPCLIK cart is currently empty."); 
+    return; 
+  }
   renderCartSummary();
   document.getElementById("checkoutModal").classList.add("open");
 }
@@ -221,6 +313,7 @@ function openCheckout() {
 document.getElementById("closeCheckout").addEventListener("click", () => {
   document.getElementById("checkoutModal").classList.remove("open");
 });
+
 document.getElementById("checkoutModal").addEventListener("click", e => {
   if (e.target === document.getElementById("checkoutModal"))
     document.getElementById("checkoutModal").classList.remove("open");
@@ -233,7 +326,7 @@ function renderCartSummary() {
     const subtotal = entry.product.price * entry.qty;
     total += subtotal;
     html += `<div class="cart-item-row">
-      <span>${esc(entry.product.name)} × ${entry.qty}</span>
+      <span><strong>${esc(entry.product.name)}</strong> × ${entry.qty}</span>
       <span>₹${subtotal.toLocaleString("en-IN")}</span>
     </div>`;
   }
@@ -255,7 +348,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async e => {
   const payMethod   = document.getElementById("payMethod").value;
 
   if (!custName || !custEmail || !custPhone || !custAddress || !custCity || !custPincode) {
-    msg.innerHTML = `<div class="msg-error">Please fill in all required fields.</div>`;
+    msg.innerHTML = `<div class="msg-error">Please complete all required fields.</div>`;
     return;
   }
 
@@ -276,13 +369,13 @@ document.getElementById("checkoutForm").addEventListener("submit", async e => {
   };
 
   btn.disabled    = true;
-  btn.textContent = "Placing Order…";
-  msg.innerHTML   = `<div class="msg-info">Submitting your order…</div>`;
+  btn.textContent = "Processing PRAPCLIK Order…";
+  msg.innerHTML   = `<div class="msg-info">Submitting order to autonomous fulfillment engine…</div>`;
 
   let ord = null;
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
+    const timer = setTimeout(() => controller.abort(), 4000);
     const res  = await fetch(API + "/api/orders", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
@@ -303,7 +396,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async e => {
       }
     }
   } catch (_) {
-    // Backend offline / not reachable: fallback to demo processor
+    // Backend fallback
   }
 
   // Standalone fallback: calculate dynamic 2 business days & save order
@@ -323,7 +416,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async e => {
     const delivery = dt.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" }) + " by 06:00 PM";
 
     ord = {
-      order_id: "ORD-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+      order_id: "PRAP-" + Math.random().toString(36).substring(2, 9).toUpperCase(),
       order_status: "CONFIRMED",
       payment_status: payMethod === "COD" ? "PAY_ON_DELIVERY" : "PAID",
       payment_method: payMethod,
@@ -336,22 +429,22 @@ document.getElementById("checkoutForm").addEventListener("submit", async e => {
     saveLocalOrder(ord);
   }
 
-  // Success
+  // Success handling
   const isExc    = ord.order_status === "EXCEPTION";
   const statusBg = isExc ? "msg-error" : "msg-success";
   const icon     = isExc ? "⚠️" : "✅";
   const delivery = ord.estimated_delivery_time || "2 business days";
+  
   msg.innerHTML  = `<div class="${statusBg}">
-    ${icon} <strong>Order ${isExc ? "flagged as exception" : "placed successfully"}!</strong><br/>
-    Order ID: <strong>${esc(ord.order_id)}</strong><br/>
+    ${icon} <strong>PRAPCLIK Order ${isExc ? "flagged for review" : "confirmed successfully"}!</strong><br/>
+    Tracking ID: <strong>${esc(ord.order_id)}</strong><br/>
     Status: ${esc(ord.order_status)} | Payment: ${esc(ord.payment_status)}<br/>
-    Total: ₹${ord.total_amount.toLocaleString("en-IN")}<br/>
-    🚚 <strong>Estimated Delivery:</strong> ${esc(delivery)}<br/>
-    ${!isExc ? `<span style="display:inline-block;margin-top:6px;font-size:0.9em;color:#15803d;background:#dcfce7;padding:3px 8px;border-radius:6px;">📲 WhatsApp notification triggered for <strong>${esc(ord.customer_phone || "")}</strong></span><br/>` : ""}
-    ${isExc ? "⚠️ Insufficient stock detected. Operations team notified." : ""}
+    Amount: ₹${ord.total_amount.toLocaleString("en-IN")}<br/>
+    🚚 <strong>Delivery:</strong> ${esc(delivery)}<br/>
+    ${!isExc ? `<span style="display:inline-block;margin-top:6px;font-size:0.88rem;color:#10b981;background:rgba(16,185,129,0.12);padding:4px 10px;border-radius:6px;">📲 Automated WhatsApp dispatch sent to <strong>${esc(ord.customer_phone || "")}</strong></span><br/>` : ""}
+    ${isExc ? "⚠️ Insufficient stock detected. The order is recorded in the Control Tower for inventory resolution." : ""}
   </div>`;
 
-  // Clear cart and reset form on success
   if (!isExc) {
     cart = {};
     updateCartFab();
@@ -366,37 +459,33 @@ document.getElementById("checkoutForm").addEventListener("submit", async e => {
 });
 
 // ============================================================
-// n8n webhook trigger (fire-and-forget from browser)
+// n8n webhook trigger
 // ============================================================
 async function triggerN8nWebhook(order) {
   const isLocal = typeof window !== "undefined" && 
     (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-  const n8nWebhookUrl = (typeof window !== "undefined" && window.TECHMART_N8N_URL) ||
-    localStorage.getItem("techmart_n8n_url") ||
+  const n8nWebhookUrl = (typeof window !== "undefined" && window.PRAPCLIK_N8N_URL) ||
+    localStorage.getItem("prapclik_n8n_url") ||
     (isLocal ? "http://localhost:5678/webhook/order-event" : "");
 
-  if (!n8nWebhookUrl) {
-    return;
-  }
+  if (!n8nWebhookUrl) return;
 
   try {
     await fetch(n8nWebhookUrl, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({
-        event_uid:               "WEB-" + order.order_id + "-" + Date.now(),
+        event_uid:               "PRAP-" + order.order_id + "-" + Date.now(),
         event_type:              order.order_status === "EXCEPTION" ? "PAID_INSUFFICIENT_STOCK" : "ORDER_CONFIRMED",
         order_id:                order.order_id,
         customer_name:           order.customer_name || "",
         customer_phone:          order.customer_phone || "",
         estimated_delivery_time: order.estimated_delivery_time || "",
         total_amount:            order.total_amount || 0,
-        source:                  "frontend",
+        source:                  "prapclik-frontend",
       }),
     });
-  } catch (_) {
-    // silently ignore
-  }
+  } catch (_) {}
 }
 
 // ============================================================
@@ -404,11 +493,11 @@ async function triggerN8nWebhook(order) {
 // ============================================================
 async function loadOrders() {
   const container = document.getElementById("ordersContainer");
-  container.innerHTML = "<div class='loading-msg'>Loading orders…</div>";
+  container.innerHTML = "<div class='loading-msg'>Connecting to PRAPCLIK order database…</div>";
   let orders = [];
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2500);
+    const timer = setTimeout(() => controller.abort(), 2800);
     const res    = await fetch(API + "/api/orders", { signal: controller.signal });
     clearTimeout(timer);
     if (res.ok) {
@@ -421,17 +510,22 @@ async function loadOrders() {
   }
 
   if (!orders || !orders.length) {
-    container.innerHTML = "<p class='empty-state'>No orders yet. Place your first order from the Products page!</p>";
+    container.innerHTML = `<div style="text-align:center; padding: 4rem 1rem;">
+      <div style="font-size:3rem; margin-bottom:1rem;">📦</div>
+      <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:0.5rem;">No orders yet</h3>
+      <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.5rem;">Explore our catalog and place your first order.</p>
+      <button class="btn btn-primary btn-sm" onclick="navigate('products')">Browse Products</button>
+    </div>`;
     return;
   }
 
   const rows = orders.map(o => `
     <tr>
       <td><code>${esc(o.order_id)}</code></td>
-      <td>${esc(o.customer_name)}</td>
+      <td><strong>${esc(o.customer_name)}</strong></td>
       <td>${formatDate(o.created_at)}</td>
-      <td><span style="font-weight:600;color:#0f766e;">🚚 ${esc(o.estimated_delivery_time || '2 business days')}</span></td>
-      <td>₹${(o.total_amount || 0).toLocaleString("en-IN")}</td>
+      <td><span style="font-weight:600;color:var(--c-cyan);">🚚 ${esc(o.estimated_delivery_time || '2 business days')}</span></td>
+      <td><strong>₹${(o.total_amount || 0).toLocaleString("en-IN")}</strong></td>
       <td>${paymentBadge(o.payment_method)}</td>
       <td>${payStatusBadge(o.payment_status)}</td>
       <td>${orderStatusBadge(o.order_status)}</td>
@@ -454,45 +548,45 @@ async function loadOrders() {
 }
 
 // ============================================================
-// Control Tower / Dashboard
+// Control Tower / Operations Dashboard
 // ============================================================
 async function loadDashboard() {
   try {
     let data = null;
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2500);
-    const res  = await fetch(API + "/api/dashboard", { signal: controller.signal });
-    clearTimeout(timer);
-    if (res.ok) {
-      data = await res.json();
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2800);
+      const res  = await fetch(API + "/api/dashboard", { signal: controller.signal });
+      clearTimeout(timer);
+      if (res.ok) {
+        data = await res.json();
+      }
+    } catch (_) {}
+
+    if (!data) {
+      const localOrders = getLocalOrders();
+      const totalRev = localOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+      data = {
+        total_orders: localOrders.length,
+        total_exceptions: 0,
+        high_severity_count: 0,
+        revenue_paid: totalRev,
+        recent_exceptions: [],
+        recent_events: localOrders.map(o => ({
+          event_id: o.order_id,
+          order_id: o.order_id,
+          event_type: "ORDER_CONFIRMED",
+          processing_status: "PROCESSED",
+          received_at: o.created_at || new Date().toISOString()
+        }))
+      };
     }
-  } catch (_) {}
 
-  if (!data) {
-    const localOrders = getLocalOrders();
-    const totalRev = localOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-    data = {
-      total_orders: localOrders.length,
-      total_exceptions: 0,
-      high_severity_count: 0,
-      revenue_paid: totalRev,
-      recent_exceptions: [],
-      recent_events: localOrders.map(o => ({
-        event_id: o.order_id,
-        order_id: o.order_id,
-        event_type: "ORDER_CONFIRMED",
-        processing_status: "PROCESSED",
-        received_at: o.created_at || new Date().toISOString()
-      }))
-    };
-  }
-
-  document.getElementById("kpi-total").textContent   = data.total_orders ?? 0;
-  document.getElementById("kpi-exc").textContent     = data.total_exceptions ?? 0;
-  document.getElementById("kpi-high").textContent    = data.high_severity_count ?? 0;
-  document.getElementById("kpi-revenue").textContent =
-    data.revenue_paid != null ? "₹" + data.revenue_paid.toLocaleString("en-IN") : "₹0";
+    document.getElementById("kpi-total").textContent   = data.total_orders ?? 0;
+    document.getElementById("kpi-exc").textContent     = data.total_exceptions ?? 0;
+    document.getElementById("kpi-high").textContent    = data.high_severity_count ?? 0;
+    document.getElementById("kpi-revenue").textContent =
+      data.revenue_paid != null ? "₹" + data.revenue_paid.toLocaleString("en-IN") : "₹0";
 
     // Exceptions table
     const excDiv = document.getElementById("exceptionsTable");
@@ -509,7 +603,7 @@ async function loadDashboard() {
             <td>${esc(e.exception_status)}</td>
           </tr>`).join("")}</tbody>
         </table>`
-      : "<p class='empty-state'>No open exceptions 🎉</p>";
+      : "<p class='empty-state'>All systems nominal. No open exceptions 🎉</p>";
 
     // Events table
     const evDiv  = document.getElementById("eventsTable");
@@ -524,7 +618,7 @@ async function loadDashboard() {
             <td>${formatDate(ev.received_at)}</td>
           </tr>`).join("")}</tbody>
         </table>`
-      : "<p class='empty-state'>No automation events yet.</p>";
+      : "<p class='empty-state'>No automation events recorded yet.</p>";
 
     // Status bars
     const statusMap  = data.orders_by_status || {};
@@ -534,10 +628,12 @@ async function loadDashboard() {
       const pct = Math.round((count / total) * 100);
       return `<div class="status-bar-item">
         <span class="status-bar-label">${esc(status)}</span>
-        <div class="status-bar-fill" style="width:${pct * 1.5}px; max-width:300px"></div>
-        <span class="status-bar-count">${count}</span>
+        <div class="status-bar-track">
+          <div class="status-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <span class="status-bar-count">${count} (${pct}%)</span>
       </div>`;
-    }).join("") || "<p class='empty-state'>No orders yet.</p>";
+    }).join("") || "<p class='empty-state'>No orders recorded yet.</p>";
 
     // Team table
     const teamDiv = document.getElementById("teamTable");
@@ -549,7 +645,7 @@ async function loadDashboard() {
             <td><strong>${esc(team)}</strong></td><td>${cnt}</td>
           </tr>`).join("")}</tbody>
         </table>`
-      : "<p class='empty-state'>No team assignments yet.</p>";
+      : "<p class='empty-state'>Zero team escalation backlog.</p>";
 
   } catch (err) {
     document.getElementById("kpi-total").textContent = "—";
@@ -558,7 +654,7 @@ async function loadDashboard() {
 }
 
 // ============================================================
-// Admin simulation
+// Admin Simulation (Rule A)
 // ============================================================
 function openAdminSim() {
   const panel = document.getElementById("adminPanel");
@@ -566,12 +662,12 @@ function openAdminSim() {
 }
 
 async function runAdminSim() {
-  const productId = parseInt(document.getElementById("adminProductId").value) || 1;
+  const productId = parseInt(document.getElementById("adminProductId").value) || 4;
   const qty       = parseInt(document.getElementById("adminQty").value) || 999;
   const apiKey    = document.getElementById("adminKey").value.trim();
   const msgDiv    = document.getElementById("adminMsg");
 
-  msgDiv.innerHTML = `<div class="msg-info">Running simulation…</div>`;
+  msgDiv.innerHTML = `<div class="msg-info">Executing simulation on Flask API…</div>`;
   try {
     const res  = await fetch(API + "/api/admin/simulate-paid-insufficient-stock", {
       method:  "POST",
@@ -580,33 +676,67 @@ async function runAdminSim() {
     });
     const data = await res.json();
     if (!res.ok) {
-      msgDiv.innerHTML = `<div class="msg-error">❌ ${esc(data.error || "Failed")}</div>`;
+      msgDiv.innerHTML = `<div class="msg-error">❌ ${esc(data.error || "Simulation failed")}</div>`;
       return;
     }
     msgDiv.innerHTML = `<div class="msg-success">
-      ✅ Simulation created!<br/>
-      Order ID: <strong>${esc(data.order_id)}</strong><br/>
-      Product: ${esc(data.product)} | Qty: ${data.quantity} | Stock: ${data.stock_available}<br/>
-      Severity: <strong>${esc(data.severity)}</strong> | Team: <strong>${esc(data.owner_team)}</strong><br/>
-      <small>${esc(data.note)}</small>
+      ✅ <strong>Simulation created successfully!</strong><br/>
+      Order ID: <code>${esc(data.order_id)}</code><br/>
+      Exception Type: <code>${esc(data.exception_type)}</code> (Severity: ${esc(data.severity)})<br/>
+      Owner Team: <strong>${esc(data.owner_team)}</strong><br/>
+      Webhook: ${esc(data.webhook_delivery || "dispatched")}
     </div>`;
-    // Refresh dashboard
-    setTimeout(loadDashboard, 500);
+    loadDashboard();
   } catch (err) {
-    msgDiv.innerHTML = `<div class="msg-error">❌ ${esc(err.message)}</div>`;
+    msgDiv.innerHTML = `<div class="msg-error">Simulation error: ${esc(err.message)}</div>`;
   }
 }
 
 // ============================================================
-// Badge helpers
+// PRAPCLIK AI Assistant
+// ============================================================
+function handleAiQuery(e) {
+  e.preventDefault();
+  const input = document.getElementById("aiQueryInput");
+  const query = (input.value || "").trim();
+  if (!query) return;
+
+  const respBox = document.getElementById("aiChatResponse");
+  const qLower = query.toLowerCase();
+
+  let answer = "";
+  if (qLower.includes("headphone") || qLower.includes("battery") || qLower.includes("audio")) {
+    answer = "🎧 <strong>PRAPCLIK Wireless Headphones</strong> feature Bluetooth 5.3, active noise cancellation, and up to 40 hours of continuous playback. They are in stock and ship in 2 business days.";
+  } else if (qLower.includes("keyboard") || qLower.includes("switch")) {
+    answer = "⌨️ <strong>PRAPCLIK Mechanical Keyboard</strong> offers tactile blue switches, TKL compact layout, per-key RGB backlighting, and a detachable braided USB-C cable.";
+  } else if (qLower.includes("deliver") || qLower.includes("fast") || qLower.includes("time")) {
+    answer = "🚚 All PRAPCLIK orders are dispatched via our atomic fulfillment engine. Deliveries arrive in <strong>2 business days by 6:00 PM</strong>, complete with automated WhatsApp tracking.";
+  } else if (qLower.includes("watch") || qLower.includes("smart")) {
+    answer = "⌚ <strong>PRAPCLIK Smart Watch</strong> features an AMOLED display, GPS tracking, 7-day battery life, and IP68 waterproof rating for daily tracking.";
+  } else if (qLower.includes("mouse")) {
+    answer = "🖱️ <strong>PRAPCLIK Ergonomic Mouse</strong> has a vertical natural grip, 4000 DPI sensor, silent clicks, and 6 programmable buttons to prevent wrist strain.";
+  } else if (qLower.includes("hub") || qLower.includes("stand")) {
+    answer = "🔌 Our <strong>7-in-1 USB-C Hub</strong> supports 4K HDMI and 100W PD charging. Pair it with the <strong>Aluminium Laptop Stand</strong> for the optimal workstation setup.";
+  } else {
+    answer = `✨ Thank you for asking about <em>"${esc(query)}"</em>! Every product at PRAPCLIK comes with genuine manufacturer warranty, real-time tracking, and 7-day returns.`;
+  }
+
+  respBox.innerHTML = `<div><strong>You:</strong> ${esc(query)}</div><div style="margin-top:0.6rem;">${answer}</div>`;
+  input.value = "";
+}
+
+// ============================================================
+// Badges & Formatting Helpers
 // ============================================================
 function orderStatusBadge(s) {
   const map = {
-    CONFIRMED: "badge-confirmed", EXCEPTION: "badge-exception",
-    ORDER_PLACED: "badge-placed", DELIVERED: "badge-confirmed",
+    ORDER_PLACED: "badge-placed", CONFIRMED: "badge-confirmed",
+    EXCEPTION: "badge-exception", READY_TO_SHIP: "badge-placed",
+    DISPATCHED: "badge-placed", DELIVERED: "badge-confirmed", CANCELLED: "badge-failed",
   };
   return `<span class="badge ${map[s] || 'badge-placed'}">${s}</span>`;
 }
+
 function payStatusBadge(s) {
   const map = {
     PAID: "badge-paid", PENDING: "badge-pending",
@@ -614,17 +744,16 @@ function payStatusBadge(s) {
   };
   return `<span class="badge ${map[s] || 'badge-pending'}">${s}</span>`;
 }
+
 function paymentBadge(m) {
   return `<span class="badge ${m === 'ONLINE' ? 'badge-confirmed' : 'badge-cod'}">${m}</span>`;
 }
+
 function severityBadge(s) {
   const map = { HIGH: "badge-high", MEDIUM: "badge-medium", LOW: "badge-low", CRITICAL: "badge-critical" };
   return `<span class="badge ${map[s] || 'badge-low'}">${s}</span>`;
 }
 
-// ============================================================
-// Utilities
-// ============================================================
 function esc(str) {
   if (str == null) return "";
   return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -643,16 +772,31 @@ function showToast(msg) {
   if (!t) {
     t = document.createElement("div");
     t.id = "__toast";
-    t.style.cssText = "position:fixed;bottom:5rem;right:2rem;background:#1a1814;color:#fff;padding:.65rem 1.2rem;border-radius:8px;font-size:.875rem;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.25);transition:opacity .3s;";
+    t.style.cssText = "position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:rgba(13,17,26,0.95);backdrop-filter:blur(10px);border:1px solid rgba(99,102,241,0.4);color:#fff;padding:.75rem 1.6rem;border-radius:9999px;font-size:.9rem;font-weight:600;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .3s, transform .3s;display:flex;align-items:center;gap:.5rem;";
     document.body.appendChild(t);
   }
-  t.textContent = msg;
+  t.innerHTML = `<span>⚡</span> ${msg}`;
   t.style.opacity = "1";
+  t.style.transform = "translateX(-50%) translateY(0)";
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.style.opacity = "0"; }, 2500);
+  toastTimer = setTimeout(() => { 
+    t.style.opacity = "0"; 
+    t.style.transform = "translateX(-50%) translateY(10px)";
+  }, 2600);
 }
 
 // ============================================================
-// Init
+// Initialization & Smooth Opening Intro
 // ============================================================
-navigate("home");
+window.addEventListener("DOMContentLoaded", () => {
+  navigate("home");
+  updateCartFab();
+
+  // Intro loader reveal
+  const loader = document.getElementById("prapclikLoader");
+  if (loader) {
+    setTimeout(() => {
+      loader.classList.add("fade-out");
+    }, 1200);
+  }
+});
