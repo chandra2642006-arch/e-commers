@@ -1,10 +1,10 @@
 /* =============================================================================
    PRAPCLIK — International Consumer E-Commerce Application Engine
-   Backend Integration, Cart Synchronization & Interactive UX
+   Backend Integration, Navigation, Filter Engine & Cart Synchronization
    ============================================================================= */
 
 // Live Backend API resolution
-const DEFAULT_LIVE_BACKEND = "https://09ddaf88d96568.lhr.life";
+const DEFAULT_LIVE_BACKEND = "https://d58a029fdba188.lhr.life";
 
 function getApiBaseUrl() {
   if (typeof window === "undefined") return "http://127.0.0.1:5000";
@@ -23,14 +23,128 @@ function getApiBaseUrl() {
 
 const API = getApiBaseUrl();
 
-// Standalone Products Fallback (High-definition catalog)
+// Standalone Products Fallback (High-definition commercial hardware catalog)
 const SEED_PRODUCTS = [
-  { product_id: 4, name: "Wireless Headphones", price: 2499.00, original_price: 4999.00, discount: "50% OFF", rating: "4.8", rating_count: "14,250", stock_qty: 10, category: "audio", description: "Bluetooth 5.3, 40-hour battery, active noise cancellation, foldable design." },
-  { product_id: 5, name: "Mechanical Keyboard", price: 3999.00, original_price: 6999.00, discount: "42% OFF", rating: "4.9", rating_count: "9,820", stock_qty: 8, category: "keyboards", description: "TKL layout, tactile blue switches, RGB backlight, USB-C detachable cable." },
-  { product_id: 6, name: "Ergonomic Mouse", price: 1299.00, original_price: 2499.00, discount: "48% OFF", rating: "4.6", rating_count: "7,150", stock_qty: 15, category: "mice", description: "Vertical grip, 6 programmable buttons, 4000 DPI, silent click." },
-  { product_id: 7, name: "Smart Watch", price: 7999.00, original_price: 14999.00, discount: "46% OFF", rating: "4.7", rating_count: "18,400", stock_qty: 5, category: "wearables", description: "Health tracking, GPS, 7-day battery, IP68 waterproof, AMOLED display." },
-  { product_id: 8, name: "USB-C Hub 7-in-1", price: 1599.00, original_price: 2999.00, discount: "46% OFF", rating: "4.5", rating_count: "5,300", stock_qty: 20, category: "accessories", description: "HDMI 4K, 3x USB-A, SD card, 100W PD charging, aluminium shell." },
-  { product_id: 9, name: "Laptop Stand", price: 799.00, original_price: 1599.00, discount: "50% OFF", rating: "4.9", rating_count: "24,800", stock_qty: 25, category: "accessories", description: "Adjustable aluminium stand, 10–15 inch, ergonomic angle, portable." }
+  { 
+    product_id: 4, 
+    name: "Wireless Headphones", 
+    price: 2499.00, 
+    original_price: 4999.00, 
+    discount: "50% OFF", 
+    rating: "4.8", 
+    rating_count: "14,250", 
+    stock_qty: 10, 
+    category: "audio", 
+    description: "Bluetooth 5.3, 40-hour battery, active noise cancellation, foldable ergonomic earcups.",
+    specs: {
+      "Model": "PRAPCLIK Studio ANC-100",
+      "Connectivity": "Bluetooth 5.3 + 3.5mm Aux",
+      "Battery Life": "40 Hours (ANC on)",
+      "Charging": "USB-C Fast Charge (10m = 4h)",
+      "Warranty": "1-Year Official Replacement",
+      "In the Box": "Headphones, Aux Cable, Braided USB-C Cable, Pouch"
+    }
+  },
+  { 
+    product_id: 5, 
+    name: "Mechanical Keyboard", 
+    price: 3999.00, 
+    original_price: 6999.00, 
+    discount: "42% OFF", 
+    rating: "4.9", 
+    rating_count: "9,820", 
+    stock_qty: 8, 
+    category: "keyboards", 
+    description: "TKL compact layout, tactile clicky switches, per-key RGB backlight, detachable braided cable.",
+    specs: {
+      "Model": "PRAPCLIK Vulcan TKL-87",
+      "Switch Type": "Hot-swappable Tactile Blue",
+      "Keycaps": "Double-shot PBT Matte",
+      "Backlighting": "16.8M Color Dynamic RGB",
+      "Warranty": "1-Year Official Replacement",
+      "Compatibility": "Windows, macOS, Linux, iPadOS"
+    }
+  },
+  { 
+    product_id: 6, 
+    name: "Ergonomic Mouse", 
+    price: 1299.00, 
+    original_price: 2499.00, 
+    discount: "48% OFF", 
+    rating: "4.6", 
+    rating_count: "7,150", 
+    stock_qty: 15, 
+    category: "mice", 
+    description: "Vertical 57-degree natural grip, 6 programmable buttons, 4000 DPI precision sensor, silent click.",
+    specs: {
+      "Model": "PRAPCLIK Ortho Vertical V2",
+      "Sensor": "High-Precision Optical 4000 DPI",
+      "Connectivity": "2.4GHz Wireless + Bluetooth 5.1",
+      "Ergonomics": "57° Natural Handshake Angle",
+      "Warranty": "1-Year Official Replacement",
+      "Battery": "Rechargeable 500mAh (Up to 90 Days)"
+    }
+  },
+  { 
+    product_id: 7, 
+    name: "Smart Watch", 
+    price: 7999.00, 
+    original_price: 14999.00, 
+    discount: "46% OFF", 
+    rating: "4.7", 
+    rating_count: "18,400", 
+    stock_qty: 5, 
+    category: "wearables", 
+    description: "Advanced health tracking, dual-band GPS, 7-day battery, IP68 water resistance, crisp AMOLED display.",
+    specs: {
+      "Model": "PRAPCLIK Chrono Active AMOLED",
+      "Display": "1.43-inch Always-On AMOLED 466x466",
+      "Health Sensors": "SpO2, 24/7 Heart Rate, Sleep Quality, Stress",
+      "Water Resistance": "IP68 (5 ATM Water Resistant)",
+      "Battery Life": "7 Days Standard, 14 Days Power Saver",
+      "Warranty": "1-Year Official Replacement"
+    }
+  },
+  { 
+    product_id: 8, 
+    name: "USB-C Hub 7-in-1", 
+    price: 1599.00, 
+    original_price: 2999.00, 
+    discount: "46% OFF", 
+    rating: "4.5", 
+    rating_count: "5,300", 
+    stock_qty: 20, 
+    category: "accessories", 
+    description: "HDMI 4K@60Hz, 3x USB-A 3.2, UHS-I SD/TF card slots, 100W Power Delivery pass-through, aluminium shell.",
+    specs: {
+      "Model": "PRAPCLIK HyperPort 7-in-1",
+      "Video Output": "HDMI 2.0 (4K @ 60Hz HDR)",
+      "Power Delivery": "100W USB-C PD 3.0",
+      "USB Speeds": "3x USB 3.2 Gen 1 (5 Gbps)",
+      "Housing": "Anodized Aerospace Aluminium",
+      "Warranty": "1-Year Official Replacement"
+    }
+  },
+  { 
+    product_id: 9, 
+    name: "Laptop Stand", 
+    price: 799.00, 
+    original_price: 1599.00, 
+    discount: "50% OFF", 
+    rating: "4.9", 
+    rating_count: "24,800", 
+    stock_qty: 25, 
+    category: "accessories", 
+    description: "Multi-angle adjustable aluminium riser, suitable for 10–16 inch notebooks, portable foldable design.",
+    specs: {
+      "Model": "PRAPCLIK ErgoLift Foldable",
+      "Material": "Solid Anodized Aluminium Alloy",
+      "Adjustability": "6 Ergonomic Tilt Angles (15°–45°)",
+      "Compatibility": "All Laptops & Tablets (10 to 16.5 inches)",
+      "Protection": "Anti-slip Silicone Pads & Stopper Hook",
+      "Warranty": "1-Year Official Replacement"
+    }
+  }
 ];
 
 const PRODUCT_ICONS = {
@@ -49,6 +163,8 @@ let currentCategory = "all";
 let searchFilterQuery = "";
 let pendingAuthMobile = "";
 let authenticatedCustomer = null;
+let selectedDetailsProduct = null;
+let selectedDetailsQty = 1;
 
 // =============================================================================
 // 1. SIGNATURE OPENING ANIMATION SEQUENCE
@@ -57,32 +173,53 @@ function initSignatureAnimation() {
   const introEl = document.getElementById("prapclikExperienceIntro");
   if (!introEl) return;
 
-  // Check if opening animation has already been shown this session
   const hasSeenIntro = sessionStorage.getItem("prapclik_intro_seen");
   if (hasSeenIntro) {
     introEl.classList.add("intro-dismissed");
     return;
   }
 
-  // Smooth choreographed animation dismiss
   setTimeout(() => {
     introEl.classList.add("intro-dismissed");
     sessionStorage.setItem("prapclik_intro_seen", "true");
-  }, 1400);
+  }, 1300);
 }
 
 // =============================================================================
-// 2. VIEW NAVIGATION & SMOOTH TRANSITIONS
+// 2. VIEW NAVIGATION & ROUTING
 // =============================================================================
 function navigateToView(viewId) {
+  // Hide all views
   document.querySelectorAll(".prapclik-view").forEach(el => el.classList.remove("active"));
+  
+  // Show target view
   const target = document.getElementById("view-" + viewId);
   if (target) {
     target.classList.add("active");
   }
+
+  // Update navigation button active state
+  document.querySelectorAll(".nav-link-btn").forEach(btn => {
+    if (btn.getAttribute("data-nav") === viewId) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
+  // Close mobile nav drawer if open
+  const navBar = document.getElementById("mainHeaderNav");
+  if (navBar) navBar.classList.remove("mobile-visible");
+
+  // Scroll to top
   window.scrollTo({ top: 0, behavior: "smooth" });
 
-  if (viewId === "orders") {
+  // View-specific trigger routines
+  if (viewId === "products") {
+    applyProductFilters();
+  } else if (viewId === "cart") {
+    renderCartPage();
+  } else if (viewId === "orders") {
     syncCustomerOrders();
   }
 }
@@ -94,8 +231,22 @@ function scrollToShelf() {
   }
 }
 
+function toggleMobileNavMenu() {
+  const nav = document.getElementById("mainHeaderNav");
+  if (nav) {
+    nav.classList.toggle("mobile-visible");
+  }
+}
+
+function toggleMobileFilterDrawer() {
+  const sidebar = document.getElementById("filterSidebar");
+  if (sidebar) {
+    sidebar.classList.toggle("open-drawer");
+  }
+}
+
 // =============================================================================
-// 3. PRODUCT CATALOG DATA & RENDERING
+// 3. PRODUCT CATALOG DATA LOADING
 // =============================================================================
 async function loadProductCatalog() {
   if (productsList.length > 0) return productsList;
@@ -109,7 +260,6 @@ async function loadProductCatalog() {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        // Enrich backend items with commercial marketing tags
         productsList = data.map((item, idx) => {
           const seed = SEED_PRODUCTS.find(s => s.name === item.name) || SEED_PRODUCTS[idx % SEED_PRODUCTS.length];
           return {
@@ -118,20 +268,28 @@ async function loadProductCatalog() {
             discount: seed.discount || "45% OFF",
             rating: seed.rating || "4.8",
             rating_count: seed.rating_count || "4,500",
-            category: seed.category || "accessories"
+            category: seed.category || "accessories",
+            specs: seed.specs || {
+              "Model": "PRAPCLIK Series X",
+              "Warranty": "1-Year Official Replacement",
+              "Dispatch": "Ships within 24 Hours"
+            }
           };
         });
         return productsList;
       }
     }
   } catch (_) {
-    // Fallback to offline catalog
+    // Offline resilience fallback
   }
 
   productsList = [...SEED_PRODUCTS];
   return productsList;
 }
 
+// =============================================================================
+// 4. HOMEPAGE MATRIX RENDERING
+// =============================================================================
 async function renderCatalogMatrix() {
   const products = await loadProductCatalog();
 
@@ -161,10 +319,10 @@ async function renderCatalogMatrix() {
     return;
   }
 
-  container.innerHTML = filtered.map(renderProductCardMarkup).join("");
+  container.innerHTML = filtered.map(p => renderProductCardMarkup(p)).join("");
 
   if (trendingContainer) {
-    trendingContainer.innerHTML = products.slice(0, 4).map(renderProductCardMarkup).join("");
+    trendingContainer.innerHTML = products.slice(0, 4).map(p => renderProductCardMarkup(p)).join("");
   }
 }
 
@@ -181,7 +339,7 @@ function renderProductCardMarkup(p) {
   }
 
   return `
-    <div class="product-card-prapclik" onclick="quickAddToCart(${p.product_id})">
+    <div class="product-card-prapclik" onclick="openProductDetails(${p.product_id})">
       <div class="card-top-meta">
         <span class="card-discount-badge">${p.discount}</span>
         ${stockMarkup}
@@ -191,7 +349,7 @@ function renderProductCardMarkup(p) {
         <span>${icon}</span>
       </div>
 
-      <div class="card-category-label">${esc(p.category || 'Gear')}</div>
+      <div class="card-category-label">${esc(p.category || 'Hardware')}</div>
       <div class="card-product-name" title="${esc(p.name)}">${esc(p.name)}</div>
       
       <div class="card-rating-strip">
@@ -206,10 +364,10 @@ function renderProductCardMarkup(p) {
 
       <div class="card-button-row" onclick="event.stopPropagation()">
         <button class="btn-card-cart" ${isOutOfStock ? "disabled" : ""} onclick="quickAddToCart(${p.product_id})">
-          <span>🛒</span> Add
+          <span>🛒</span> Add to Cart
         </button>
         <button class="btn-card-buy" ${isOutOfStock ? "disabled" : ""} onclick="quickBuyNow(${p.product_id})">
-          ⚡ Buy
+          ⚡ Buy Now
         </button>
       </div>
     </div>`;
@@ -226,19 +384,270 @@ function selectCategory(cat, navItem) {
 function handleCatalogSearch(val) {
   searchFilterQuery = (val || "").trim().toLowerCase();
   renderCatalogMatrix();
+  if (document.getElementById("view-products").classList.contains("active")) {
+    applyProductFilters();
+  }
 }
 
 function submitSearchClick() {
   const input = document.getElementById("catalogSearchField");
   if (input) {
     handleCatalogSearch(input.value);
-    scrollToShelf();
+    if (!document.getElementById("view-products").classList.contains("active")) {
+      navigateToView("products");
+    }
   }
 }
 
 // =============================================================================
-// 4. CART INTERACTIONS & ORDER CHECKOUT
+// 5. DEDICATED PRODUCTS LISTING WITH ADVANCED FILTERING & SORTING
 // =============================================================================
+async function applyProductFilters() {
+  const products = await loadProductCatalog();
+  const grid = document.getElementById("allProductsListingGrid");
+  const countLabel = document.getElementById("productsListingCount");
+  if (!grid) return;
+
+  // 1. Category Filter Checkboxes
+  const selectedCats = Array.from(document.querySelectorAll('input[name="filterCat"]:checked')).map(el => el.value);
+
+  // 2. Price Range Filter Checkboxes
+  const selectedPrices = Array.from(document.querySelectorAll('input[name="filterPrice"]:checked')).map(el => el.value);
+
+  // 3. Customer Ratings Checkboxes
+  const selectedRatings = Array.from(document.querySelectorAll('input[name="filterRating"]:checked')).map(el => parseFloat(el.value));
+
+  // 4. Availability Checkbox
+  const inStockOnly = document.getElementById("filterInStockOnly") ? document.getElementById("filterInStockOnly").checked : false;
+
+  // Filter products
+  let filtered = products.filter(p => {
+    // Category match
+    if (selectedCats.length > 0 && !selectedCats.includes(p.category)) {
+      return false;
+    }
+
+    // Price range match
+    if (selectedPrices.length > 0) {
+      const matchPrice = selectedPrices.some(range => {
+        if (range === "under-1000") return p.price < 1000;
+        if (range === "1000-2500") return p.price >= 1000 && p.price <= 2500;
+        if (range === "2500-5000") return p.price > 2500 && p.price <= 5000;
+        if (range === "above-5000") return p.price > 5000;
+        return true;
+      });
+      if (!matchPrice) return false;
+    }
+
+    // Rating match
+    if (selectedRatings.length > 0) {
+      const pRating = parseFloat(p.rating || 0);
+      const minSelected = Math.min(...selectedRatings);
+      if (pRating < minSelected) return false;
+    }
+
+    // In Stock Only
+    if (inStockOnly && p.stock_qty <= 0) {
+      return false;
+    }
+
+    // Search query
+    if (searchFilterQuery) {
+      const matchesName = p.name.toLowerCase().includes(searchFilterQuery);
+      const matchesDesc = p.description && p.description.toLowerCase().includes(searchFilterQuery);
+      if (!matchesName && !matchesDesc) return false;
+    }
+
+    return true;
+  });
+
+  // Sort products
+  const sortSelect = document.getElementById("productsSortSelect");
+  const sortVal = sortSelect ? sortSelect.value : "popular";
+
+  if (sortVal === "price-low") {
+    filtered.sort((a, b) => a.price - b.price);
+  } else if (sortVal === "price-high") {
+    filtered.sort((a, b) => b.price - a.price);
+  } else if (sortVal === "rating") {
+    filtered.sort((a, b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0));
+  } else if (sortVal === "newest") {
+    filtered.sort((a, b) => b.product_id - a.product_id);
+  }
+
+  // Update count badge
+  if (countLabel) {
+    countLabel.innerHTML = `Showing <strong>${filtered.length}</strong> of ${products.length} products`;
+  }
+
+  // Render grid
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column: 1/-1; background:#fff; border:1px solid var(--border-light); border-radius:12px; padding:60px 20px; text-align:center;">
+        <div style="font-size:3.5rem; margin-bottom:12px;">🔍</div>
+        <h3 style="font-family:var(--font-display); font-size:1.35rem; margin-bottom:6px;">No products match your selected filters</h3>
+        <p style="color:var(--text-secondary); font-size:0.95rem; margin-bottom:20px;">Try clearing some filters or searching with different terms.</p>
+        <button class="hero-cta-btn" onclick="resetFilters()">Reset All Filters</button>
+      </div>`;
+  } else {
+    grid.innerHTML = filtered.map(p => renderProductCardMarkup(p)).join("");
+  }
+}
+
+function resetFilters() {
+  document.querySelectorAll('input[name="filterCat"]').forEach(cb => cb.checked = false);
+  document.querySelectorAll('input[name="filterPrice"]').forEach(cb => cb.checked = false);
+  document.querySelectorAll('input[name="filterRating"]').forEach(cb => cb.checked = false);
+  const inStock = document.getElementById("filterInStockOnly");
+  if (inStock) inStock.checked = false;
+  const sortSelect = document.getElementById("productsSortSelect");
+  if (sortSelect) sortSelect.value = "popular";
+
+  applyProductFilters();
+  triggerNotification("Filters cleared");
+}
+
+// =============================================================================
+// 6. DEDICATED INDIVIDUAL PRODUCT DETAILS VIEW
+// =============================================================================
+async function openProductDetails(productId) {
+  const products = await loadProductCatalog();
+  const product = products.find(p => p.product_id === productId);
+  if (!product) return;
+
+  selectedDetailsProduct = product;
+  selectedDetailsQty = 1;
+
+  const container = document.getElementById("productDetailsContent");
+  if (!container) return;
+
+  const icon = PRODUCT_ICONS[product.name] || "📦";
+  const isOutOfStock = product.stock_qty <= 0;
+  const savings = Math.round(product.original_price - product.price);
+
+  let specsRows = "";
+  if (product.specs) {
+    for (const [key, val] of Object.entries(product.specs)) {
+      specsRows += `
+        <div class="spec-line-item">
+          <div class="spec-key">${esc(key)}</div>
+          <div class="spec-val">${esc(val)}</div>
+        </div>`;
+    }
+  }
+
+  container.innerHTML = `
+    <div class="details-gallery-box">
+      <div class="details-product-icon">${icon}</div>
+    </div>
+
+    <div class="details-content-box">
+      <div class="details-badge-row">
+        <span class="card-discount-badge">${product.discount}</span>
+        <span class="card-stock-pill ${isOutOfStock ? 'out' : ''}">
+          ● ${isOutOfStock ? 'Currently Out of Stock' : 'In Stock (' + product.stock_qty + ' units)'}
+        </span>
+      </div>
+
+      <h1 class="details-product-title">${esc(product.name)}</h1>
+
+      <div class="details-rating-row">
+        <span class="star-tag" style="font-size:0.95rem;">★ ${product.rating}</span>
+        <span class="star-count-text" style="font-size:0.92rem;">${product.rating_count} Customer Ratings</span>
+        <span style="color:var(--border-light);">|</span>
+        <span style="color:var(--c-royal); font-weight:700; font-size:0.88rem;">100% Genuine Certified</span>
+      </div>
+
+      <div class="details-price-banner">
+        <span class="details-price-val">₹${product.price.toLocaleString("en-IN")}</span>
+        <span class="details-price-mrp">₹${Math.round(product.original_price).toLocaleString("en-IN")}</span>
+        <span class="details-price-save">Save ₹${savings.toLocaleString("en-IN")} (${product.discount})</span>
+      </div>
+
+      <p style="color:var(--text-body); font-size:1.02rem; line-height:1.7; margin-bottom:20px;">
+        ${esc(product.description)}
+      </p>
+
+      <div class="details-specs-list">
+        <h4 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dark); margin-bottom:10px;">
+          Product Specifications
+        </h4>
+        ${specsRows}
+      </div>
+
+      <div class="details-action-bar">
+        <div class="details-qty-picker">
+          <button class="qty-btn" onclick="changeDetailsQty(-1)">−</button>
+          <input type="text" class="qty-number-input" id="detailsQtyInput" value="1" readonly />
+          <button class="qty-btn" onclick="changeDetailsQty(1)">+</button>
+        </div>
+
+        <button class="btn-submit-order" style="flex:1;" ${isOutOfStock ? 'disabled' : ''} onclick="addSelectedProductToCart()">
+          🛒 Add To Cart
+        </button>
+
+        <button class="btn-card-buy" style="padding:14px 28px; font-size:1.02rem; border-radius:var(--radius-full);" ${isOutOfStock ? 'disabled' : ''} onclick="buySelectedProductNow()">
+          ⚡ Buy Now
+        </button>
+      </div>
+    </div>`;
+
+  navigateToView("details");
+}
+
+function changeDetailsQty(delta) {
+  if (!selectedDetailsProduct) return;
+  const maxStock = selectedDetailsProduct.stock_qty || 10;
+  const input = document.getElementById("detailsQtyInput");
+
+  let next = selectedDetailsQty + delta;
+  if (next < 1) next = 1;
+  if (next > maxStock) next = maxStock;
+
+  selectedDetailsQty = next;
+  if (input) input.value = next;
+}
+
+function addSelectedProductToCart() {
+  if (!selectedDetailsProduct) return;
+  
+  const id = selectedDetailsProduct.product_id;
+  if (!shoppingCart[id]) {
+    shoppingCart[id] = { product: selectedDetailsProduct, qty: selectedDetailsQty };
+  } else {
+    shoppingCart[id].qty += selectedDetailsQty;
+  }
+
+  saveCartToStorage();
+  refreshCartHeaderBadge();
+  triggerNotification(`Added ${selectedDetailsQty} × "${selectedDetailsProduct.name}" to cart`);
+}
+
+function buySelectedProductNow() {
+  addSelectedProductToCart();
+  openOrderCheckoutModal();
+}
+
+// =============================================================================
+// 7. DEDICATED SHOPPING CART PAGE & STORAGE SYNCHRONIZATION
+// =============================================================================
+function loadCartFromStorage() {
+  try {
+    const raw = localStorage.getItem("prapclik_cart");
+    if (raw) {
+      shoppingCart = JSON.parse(raw);
+    }
+  } catch (_) {
+    shoppingCart = {};
+  }
+}
+
+function saveCartToStorage() {
+  try {
+    localStorage.setItem("prapclik_cart", JSON.stringify(shoppingCart));
+  } catch (_) {}
+}
+
 function quickAddToCart(productId) {
   const p = productsList.find(x => x.product_id === productId);
   if (!p) return;
@@ -249,6 +658,7 @@ function quickAddToCart(productId) {
     shoppingCart[productId].qty += 1;
   }
 
+  saveCartToStorage();
   refreshCartHeaderBadge();
   triggerNotification(`Added "${p.name}" to cart`);
 }
@@ -266,6 +676,174 @@ function refreshCartHeaderBadge() {
   }
 }
 
+function renderCartPage() {
+  const container = document.getElementById("cartPageContainer");
+  if (!container) return;
+
+  const items = Object.entries(shoppingCart);
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div style="background:#fff; border:1px solid var(--border-light); border-radius:16px; padding:60px 20px; text-align:center; max-width:640px; margin:0 auto;">
+        <div style="font-size:4rem; margin-bottom:16px;">🛒</div>
+        <h2 style="font-family:var(--font-display); font-size:1.6rem; font-weight:800; margin-bottom:8px;">Your Shopping Cart is Empty</h2>
+        <p style="color:var(--text-secondary); font-size:1rem; margin-bottom:24px;">
+          You haven't added any products to your cart yet. Explore our genuine hardware and audio catalog.
+        </p>
+        <button class="hero-cta-btn" onclick="navigateToView('products')">
+          Explore Products →
+        </button>
+      </div>`;
+    return;
+  }
+
+  let subtotal = 0;
+  let savingsTotal = 0;
+  let itemsRowsHtml = "";
+
+  for (const [idStr, item] of items) {
+    const id = parseInt(idStr);
+    const itemTotal = item.product.price * item.qty;
+    const itemSavings = (item.product.original_price - item.product.price) * item.qty;
+    subtotal += itemTotal;
+    savingsTotal += itemSavings;
+
+    const icon = PRODUCT_ICONS[item.product.name] || "📦";
+
+    itemsRowsHtml += `
+      <div class="cart-item-row-full">
+        <div class="cart-thumb-box">
+          <span>${icon}</span>
+        </div>
+
+        <div class="cart-item-info-col">
+          <h4 onclick="openProductDetails(${id})" style="cursor:pointer;" title="View details">${esc(item.product.name)}</h4>
+          <div style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:10px;">
+            Category: ${esc(item.product.category || 'Hardware')} • 1-Year Brand Warranty
+          </div>
+
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div class="details-qty-picker" style="height:34px;">
+              <button class="qty-btn" style="width:32px; height:34px;" onclick="changeCartItemQty(${id}, -1)">−</button>
+              <input type="text" class="qty-number-input" style="width:38px; height:34px; font-size:0.9rem;" value="${item.qty}" readonly />
+              <button class="qty-btn" style="width:32px; height:34px;" onclick="changeCartItemQty(${id}, 1)">+</button>
+            </div>
+
+            <button class="cart-remove-link" onclick="removeCartItem(${id})">
+              Remove Item
+            </button>
+          </div>
+        </div>
+
+        <div class="cart-item-price-col">
+          <div style="font-size:1.25rem; font-weight:800; color:var(--text-dark);">
+            ₹${itemTotal.toLocaleString("en-IN")}
+          </div>
+          <div style="font-size:0.85rem; color:var(--text-muted); text-decoration:line-through;">
+            ₹${Math.round(item.product.original_price * item.qty).toLocaleString("en-IN")}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const shippingFee = 0; // Free express delivery
+  const totalAmount = subtotal + shippingFee;
+
+  container.innerHTML = `
+    <div class="cart-page-layout">
+      <!-- Left side: Cart item rows -->
+      <div class="cart-items-card">
+        <div class="cart-items-header">
+          <h3 style="font-size:1.2rem; font-weight:800; color:var(--text-dark);">
+            Items in Cart (${items.length})
+          </h3>
+          <button class="filter-clear-btn" onclick="clearFullCart()">Clear Cart</button>
+        </div>
+        ${itemsRowsHtml}
+      </div>
+
+      <!-- Right side: Price breakdown & checkout CTA -->
+      <div class="cart-summary-box">
+        <h3 class="summary-heading">Order Summary</h3>
+
+        <div class="summary-calc-row">
+          <span>Items Subtotal</span>
+          <span>₹${subtotal.toLocaleString("en-IN")}</span>
+        </div>
+
+        <div class="summary-calc-row">
+          <span>Express Delivery</span>
+          <span style="color:#2E7D32; font-weight:700;">FREE</span>
+        </div>
+
+        <div class="summary-calc-row">
+          <span>Total Savings</span>
+          <span style="color:var(--c-apricot-dark); font-weight:700;">₹${Math.round(savingsTotal).toLocaleString("en-IN")}</span>
+        </div>
+
+        <div class="summary-calc-row">
+          <span>GST / Taxes</span>
+          <span style="color:var(--text-muted);">Included</span>
+        </div>
+
+        <div class="summary-calc-row total-line">
+          <span>Total Payable</span>
+          <span style="color:var(--c-royal);">₹${totalAmount.toLocaleString("en-IN")}</span>
+        </div>
+
+        <button class="btn-submit-order" onclick="openOrderCheckoutModal()">
+          Proceed to Checkout →
+        </button>
+
+        <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center; margin-top:14px; line-height:1.4;">
+          🔒 256-Bit SSL Encrypted Checkout<br/>
+          Cash on Delivery & Instant UPI Available
+        </p>
+      </div>
+    </div>`;
+}
+
+function changeCartItemQty(productId, delta) {
+  if (!shoppingCart[productId]) return;
+
+  const current = shoppingCart[productId].qty;
+  const next = current + delta;
+
+  if (next <= 0) {
+    removeCartItem(productId);
+    return;
+  }
+
+  shoppingCart[productId].qty = next;
+  saveCartToStorage();
+  refreshCartHeaderBadge();
+  renderCartPage();
+}
+
+function removeCartItem(productId) {
+  const item = shoppingCart[productId];
+  if (!item) return;
+
+  delete shoppingCart[productId];
+  saveCartToStorage();
+  refreshCartHeaderBadge();
+  renderCartPage();
+  triggerNotification(`Removed "${item.product.name}" from cart`);
+}
+
+function clearFullCart() {
+  if (confirm("Are you sure you want to remove all items from your cart?")) {
+    shoppingCart = {};
+    saveCartToStorage();
+    refreshCartHeaderBadge();
+    renderCartPage();
+    triggerNotification("Cart cleared");
+  }
+}
+
+// =============================================================================
+// 8. EXPRESS CHECKOUT & ORDER DISPATCH
+// =============================================================================
 function openOrderCheckoutModal() {
   if (Object.keys(shoppingCart).length === 0) {
     triggerNotification("Your cart is empty! Add products to proceed.");
@@ -297,8 +875,8 @@ function renderCheckoutSummary() {
       </div>`;
   }
 
-  list.innerHTML = rowsHtml;
-  billEl.textContent = "₹" + total.toLocaleString("en-IN");
+  if (list) list.innerHTML = rowsHtml;
+  if (billEl) billEl.textContent = "₹" + total.toLocaleString("en-IN");
 }
 
 async function executePlaceOrder(e) {
@@ -382,6 +960,7 @@ async function executePlaceOrder(e) {
   dispatchWebhookInBackground(confirmedOrder);
 
   shoppingCart = {};
+  saveCartToStorage();
   refreshCartHeaderBadge();
   btn.disabled = false;
   btn.textContent = "Place Order & Pay";
@@ -429,7 +1008,7 @@ async function dispatchWebhookInBackground(order) {
 }
 
 // =============================================================================
-// 5. MY ORDERS TRACKING
+// 9. MY ORDERS VIEW & TRACKING
 // =============================================================================
 async function syncCustomerOrders() {
   const container = document.getElementById("customerOrdersShell");
@@ -458,7 +1037,7 @@ async function syncCustomerOrders() {
         <div style="font-size:3.5rem; margin-bottom:12px;">📦</div>
         <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:6px;">No orders found yet</h3>
         <p style="color:var(--text-secondary); margin-bottom:20px;">Explore our catalog to find premium desktop hardware and electronics.</p>
-        <button class="hero-cta-btn" onclick="navigateToView('home')">Start Shopping</button>
+        <button class="hero-cta-btn" onclick="navigateToView('products')">Start Shopping</button>
       </div>`;
     return;
   }
@@ -480,10 +1059,10 @@ async function syncCustomerOrders() {
           <div style="font-size:0.8rem; color:var(--text-muted);">${esc(ord.payment_method || 'Online')} • ${esc(ord.payment_status || 'Paid')}</div>
         </div>
         <div>
-          <div class="order-badge-pill">
+          <div class="order-timeline-pill ${isConfirmed ? 'confirmed' : 'processing'}">
             <span>●</span> ${isConfirmed ? 'Order Confirmed' : 'In Processing'}
           </div>
-          <div style="font-size:0.82rem; color:var(--c-royal); font-weight:600; margin-top:4px;">
+          <div style="font-size:0.82rem; color:var(--c-royal); font-weight:600; margin-top:6px;">
             ${esc(ord.estimated_delivery_time || 'Delivery in 2 business days')}
           </div>
         </div>
@@ -492,7 +1071,7 @@ async function syncCustomerOrders() {
 }
 
 // =============================================================================
-// 6. MOBILE PHONE LOGIN WITH OTP VERIFICATION
+// 10. PHONE NUMBER & OTP AUTHENTICATION
 // =============================================================================
 function openPhoneAuthModal() {
   document.getElementById("phoneAuthModal").classList.add("is-open");
@@ -547,7 +1126,7 @@ function verifyOtpCode() {
 
   authenticatedCustomer = {
     phone: pendingAuthMobile,
-    name: "Member " + pendingAuthMobile.substring(6)
+    name: "Customer " + pendingAuthMobile.substring(6)
   };
 
   localStorage.setItem("prapclik_customer_profile", JSON.stringify(authenticatedCustomer));
@@ -590,7 +1169,19 @@ function logoutCustomerSession() {
   }
 }
 
-// Notification Toast Utility
+// =============================================================================
+// 11. HELPER UTILITIES
+// =============================================================================
+function esc(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 let notificationTimer;
 function triggerNotification(msg) {
   const el = document.getElementById("prapclikNotification");
@@ -605,11 +1196,12 @@ function triggerNotification(msg) {
 }
 
 // =============================================================================
-// 7. BOOTSTRAP INITIALIZATION
+// 12. INITIALIZATION ON DOM READY
 // =============================================================================
 window.addEventListener("DOMContentLoaded", () => {
   initSignatureAnimation();
-  renderCatalogMatrix();
-  refreshCustomerHeaderSession();
+  loadCartFromStorage();
   refreshCartHeaderBadge();
+  refreshCustomerHeaderSession();
+  renderCatalogMatrix();
 });
