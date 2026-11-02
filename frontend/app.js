@@ -4,7 +4,7 @@
    ============================================================================= */
 
 // Live Backend API resolution
-const DEFAULT_LIVE_BACKEND = "https://d58a029fdba188.lhr.life";
+const DEFAULT_LIVE_BACKEND = "https://9fd2eeb2d4d0b1.lhr.life";
 
 function getApiBaseUrl() {
   if (typeof window === "undefined") return "http://127.0.0.1:5000";
