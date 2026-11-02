@@ -55,3 +55,41 @@ def get_order(order_id: str):
     except Exception as e:
         current_app.logger.error("Order lookup failed: %s", e)
         return jsonify({"error": "Could not retrieve order."}), 500
+
+
+@orders_bp.route("/api/orders/<order_id>/call-status", methods=["GET"])
+def get_order_call_status(order_id: str):
+    """
+    Check automated customer voice call confirmation status.
+    Masks customer phone number so sensitive info is not exposed.
+    """
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    try:
+        cur.execute(
+            """SELECT c.call_id, c.order_id, c.masked_phone, c.call_provider,
+                      c.call_status, c.created_at, o.estimated_delivery_time,
+                      o.order_status, o.customer_name
+               FROM customer_call_logs c
+               JOIN orders o ON c.order_id = o.order_id
+               WHERE c.order_id = %s""",
+            (order_id,)
+        )
+        row = cur.fetchone()
+        if not row:
+            return jsonify({
+                "order_id": order_id,
+                "call_status": "NOT_TRIGGERED",
+                "message": "No confirmation call record found for this order."
+            }), 200
+
+        if row.get("created_at"):
+            row["created_at"] = row["created_at"].isoformat()
+        return jsonify(row), 200
+    except Exception as e:
+        current_app.logger.error("Call status lookup failed: %s", e)
+        return jsonify({"error": "Could not check call status."}), 500
+    finally:
+        cur.close()
+        conn.close()
+

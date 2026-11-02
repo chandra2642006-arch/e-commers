@@ -36,6 +36,11 @@ class Config:
         "http://localhost:5678/webhook/order-event"
     )
 
+    # Voice / SMS Provider (Twilio / Exotel)
+    TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
+    TWILIO_AUTH_TOKEN  = os.environ.get("TWILIO_AUTH_TOKEN", "")
+    TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER", os.environ.get("TWILIO_WHATSAPP_NUMBER", "+14155238886"))
+
     # Request limits
     MAX_CONTENT_LENGTH = 1 * 1024 * 1024  # 1 MB
 

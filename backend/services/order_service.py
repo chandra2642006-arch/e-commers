@@ -11,10 +11,59 @@ The server calculates totals and validates every field; nothing from the browser
 """
 import uuid
 import json
+import logging
+import threading
+import requests
 from datetime import datetime, timezone, timedelta
 from typing import Optional
+from config import Config
 from database import get_connection
 from services.exception_service import record_audit, record_exception
+from services.voice_service import dispatch_automated_customer_call
+
+logger = logging.getLogger("prapclik.orders")
+
+
+def _async_post_order_automations(order_dict: dict):
+    """
+    Asynchronous post-order automations:
+    - Automatically call customer mobile number for confirmed orders.
+    - Never call for failed or cancelled orders.
+    - Trigger n8n order workflow webhook server-side.
+    """
+    order_id = order_dict.get("order_id", "")
+    order_status = order_dict.get("order_status", "")
+    payment_status = order_dict.get("payment_status", "")
+
+    # 1. Automated voice call for successfully confirmed orders only (never for failed, exception, or cancelled)
+    if order_status == "CONFIRMED" and payment_status in ("PAID", "PAY_ON_DELIVERY"):
+        try:
+            dispatch_automated_customer_call(order_id)
+        except Exception as e:
+            logger.error("Error executing automated customer call for order %s: %s", order_id, e)
+
+    # 2. Trigger n8n webhook server-side if configured
+    n8n_url = getattr(Config, "N8N_WEBHOOK_URL", "")
+    if n8n_url:
+        try:
+            payload = {
+                "event_uid": f"EVT-{order_id}-{int(datetime.now().timestamp())}",
+                "event_type": "ORDER_CONFIRMED" if order_status in ("CONFIRMED", "ORDER_PLACED") else "EXCEPTION",
+                "order_id": order_id,
+                "customer_name": order_dict.get("customer_name", ""),
+                "customer_phone": order_dict.get("customer_phone", ""),
+                "total_amount": order_dict.get("total_amount", 0),
+                "estimated_delivery_time": order_dict.get("estimated_delivery_time", ""),
+                "items": order_dict.get("items", [])
+            }
+            requests.post(
+                n8n_url,
+                json=payload,
+                headers={"X-Webhook-Secret": getattr(Config, "WEBHOOK_SECRET", "")},
+                timeout=4
+            )
+        except Exception as e:
+            logger.warning("n8n webhook dispatch skipped or unreachable for order %s: %s", order_id, e)
 
 
 def calculate_estimated_delivery(start_dt: Optional[datetime] = None) -> str:
@@ -225,7 +274,7 @@ def process_order(data: dict) -> dict:
 
         conn.commit()
 
-        return {
+        order_summary = {
             "order_id":               order_id,
             "order_status":           order_status,
             "payment_status":         payment_status,
@@ -238,6 +287,11 @@ def process_order(data: dict) -> dict:
             "customer_name":          customer["customer_name"],
             "note":                   "No real payment was processed. This is a demo application.",
         }
+
+        # Trigger background automations (Voice Call + n8n) asynchronously
+        threading.Thread(target=_async_post_order_automations, args=(order_summary,), daemon=True).start()
+
+        return order_summary
 
     except Exception:
         conn.rollback()

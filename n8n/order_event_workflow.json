@@ -148,10 +148,10 @@
     },
     {
       "parameters": {
-        "jsCode": "const meta = $('Validate & Auth').first().json;\nconst fetchedOrder = $input.first().json || {};\nconst payload = meta.original_payload || {};\nconst order = (fetchedOrder.order_id) ? fetchedOrder : payload;\n\n// Dynamic 2 business days calculation\nlet deliveryTime = order.estimated_delivery_time || payload.estimated_delivery_time;\nif (!deliveryTime) {\n  const dt = new Date();\n  let added = 0;\n  while (added < 2) {\n    dt.setDate(dt.getDate() + 1);\n    const day = dt.getDay();\n    if (day !== 0 && day !== 6) {\n      added++;\n    }\n  }\n  dt.setHours(18, 0, 0, 0);\n  deliveryTime = dt.toLocaleDateString('en-US', {\n    weekday: 'long',\n    year: 'numeric',\n    month: 'short',\n    day: 'numeric'\n  }) + ' by 6:00 PM';\n}\n\n// Format Phone Number for WhatsApp E.164\nlet rawPhone = String(order.customer_phone || payload.customer_phone || '9999999999').trim();\nlet digits = rawPhone.replace(/\\D/g, '');\nlet formattedPhone = digits;\nif (!formattedPhone.startsWith('91') && formattedPhone.length === 10) {\n  formattedPhone = '+91' + formattedPhone;\n} else if (!formattedPhone.startsWith('+')) {\n  formattedPhone = '+' + formattedPhone;\n}\n\nconst customerName = order.customer_name || payload.customer_name || 'Customer';\nconst totalAmount = order.total_amount ? Number(order.total_amount).toLocaleString('en-IN') : '0';\nconst address = order.address_line ? `${order.address_line}, ${order.city || ''} ${order.pincode || ''}` : 'Your shipping address';\n\n// Items list\nlet itemsSummary = '';\nif (Array.isArray(order.items) && order.items.length > 0) {\n  itemsSummary = '\\n📦 *Items:* ' + order.items.map(i => `${i.product_name || 'Item'} (x${i.quantity})`).join(', ');\n}\n\n// WhatsApp Message Body\nconst whatsappMessage = `🛍️ *Order Confirmed!*\\n\\nHello *${customerName}*, your order *#${meta.order_id}* has been received successfully!\\n\\n🚚 *Estimated Delivery Time:*\\n👉 *${deliveryTime}*\\n\\n📍 *Delivery Address:* ${address}${itemsSummary}\\n💰 *Total Amount:* ₹${totalAmount}\\n\\nThank you for shopping with us! You will receive another update when your package is out for delivery.`;\n\nreturn [{\n  json: {\n    event_uid: meta.event_uid,\n    event_type: 'ORDER_CONFIRMED',\n    order_id: meta.order_id,\n    severity: 'INFO',\n    owner_team: 'Fulfillment',\n    customer_name: customerName,\n    customer_phone: formattedPhone,\n    estimated_delivery_time: deliveryTime,\n    whatsapp_to: `whatsapp:${formattedPhone}`,\n    whatsapp_from: `whatsapp:${$env.TWILIO_WHATSAPP_NUMBER || '+14155238886'}`,\n    whatsapp_message: whatsappMessage,\n    twilio_sid: $env.TWILIO_ACCOUNT_SID || '',\n    twilio_token: $env.TWILIO_AUTH_TOKEN || '',\n    notes: `Order confirmed. Estimated delivery: ${deliveryTime}`\n  }\n}];"
+        "jsCode": "const meta = $('Validate & Auth').first().json;\nconst fetchedOrder = $input.first().json || {};\nconst payload = meta.original_payload || {};\nconst order = (fetchedOrder.order_id) ? fetchedOrder : payload;\n\n// Dynamic delivery time\nlet deliveryTime = order.estimated_delivery_time || payload.estimated_delivery_time || 'in 2 business days';\n\n// Format Phone Number into E.164\nlet rawPhone = String(order.customer_phone || payload.customer_phone || '9999999999').trim();\nlet digits = rawPhone.replace(/\\D/g, '');\nlet formattedPhone = digits;\nif (!formattedPhone.startsWith('91') && formattedPhone.length === 10) {\n  formattedPhone = '+91' + formattedPhone;\n} else if (!formattedPhone.startsWith('+')) {\n  formattedPhone = '+' + formattedPhone;\n}\n\nconst customerName = order.customer_name || payload.customer_name || 'Valued Customer';\nconst orderId = meta.order_id || 'ORD-UNKNOWN';\nconst formattedOrderId = orderId.replace('-', ' ').split('').join(' ');\n\n// Items list\nlet itemsSummary = 'your ordered items';\nif (Array.isArray(order.items) && order.items.length > 0) {\n  itemsSummary = order.items.map(i => `${i.quantity || 1} quantity of ${i.name || i.product_name || 'item'}`).join(', and ');\n}\n\n// Voice Speech TwiML script\nconst voiceScript = `Hello ${customerName}! This is an automated order confirmation call from PRAPCLIK. Your order with ID ${formattedOrderId} has been successfully confirmed. You have ordered ${itemsSummary}. Expected delivery is ${deliveryTime}. Thank you for shopping with PRAPCLIK! Have a wonderful day.`;\nconst voiceTwiml = `<Response><Say voice=\"Polly.Aditi\" language=\"en-IN\">${voiceScript}</Say></Response>`;\n\nreturn [{\n  json: {\n    event_uid: 'CALL-' + meta.order_id,\n    event_type: 'ORDER_CONFIRMED',\n    order_id: meta.order_id,\n    customer_name: customerName,\n    customer_phone: formattedPhone,\n    voice_to: formattedPhone,\n    voice_from: $env.TWILIO_PHONE_NUMBER || '+14155238886',\n    voice_script: voiceScript,\n    voice_twiml: voiceTwiml,\n    twilio_sid: $env.TWILIO_ACCOUNT_SID || '',\n    twilio_token: $env.TWILIO_AUTH_TOKEN || '',\n    estimated_delivery_time: deliveryTime\n  }\n}];"
       },
       "id": "4e89ac23-8756-4290-b187-578bce0624d5",
-      "name": "Format: Order Confirmed & WhatsApp",
+      "name": "Format: Order Confirmed & Customer Voice Call",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -175,7 +175,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.twilio_sid || 'AC_DEMO_ACCOUNT' }}/Messages.json",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.twilio_sid || 'AC_DEMO_ACCOUNT' }}/Calls.json",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBasicAuth",
         "sendHeaders": true,
@@ -192,15 +192,15 @@
           "parameters": [
             {
               "name": "From",
-              "value": "={{ $json.whatsapp_from }}"
+              "value": "={{ $json.voice_from }}"
             },
             {
               "name": "To",
-              "value": "={{ $json.whatsapp_to }}"
+              "value": "={{ $json.voice_to }}"
             },
             {
-              "name": "Body",
-              "value": "={{ $json.whatsapp_message }}"
+              "name": "Twiml",
+              "value": "={{ $json.voice_twiml }}"
             }
           ]
         },
@@ -210,7 +210,7 @@
         }
       },
       "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      "name": "Send WhatsApp via Twilio",
+      "name": "Initiate Customer Voice Call via Twilio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [

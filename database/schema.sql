@@ -119,6 +119,27 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 
 -- -----------------------------------------------------------------------------
+-- 7. customer_call_logs (automated voice calls, deduplication & tracking)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS customer_call_logs (
+    call_id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id        VARCHAR(40)  NOT NULL,
+    customer_phone  VARCHAR(30)  NOT NULL,
+    masked_phone    VARCHAR(30)  NOT NULL,
+    call_provider   VARCHAR(50)  NOT NULL DEFAULT 'Twilio',
+    provider_call_sid VARCHAR(100) NULL,
+    call_status     ENUM('QUEUED', 'INITIATED', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'SIMULATED') NOT NULL DEFAULT 'QUEUED',
+    voice_script    TEXT         NOT NULL,
+    error_message   TEXT         NULL,
+    retry_count     INT          NOT NULL DEFAULT 0,
+    created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_call_order (order_id),
+    INDEX idx_ccl_status (call_status),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+);
+
+-- -----------------------------------------------------------------------------
 -- Seed data — idempotent
 -- -----------------------------------------------------------------------------
 INSERT INTO products (name, description, price, stock_qty, is_active) VALUES
